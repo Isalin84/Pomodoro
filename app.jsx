@@ -141,11 +141,33 @@ function App() {
     }
   };
   
+  /*
   const playChime = () => {
     const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmFgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" +
       "AkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAk=');
     audio.volume = 0.3;
     audio.play().catch(e => console.log('Chime play failed:', e));
+  };
+  */
+  // Lightweight chime without base64 payload
+  const playChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.6);
+    } catch (e) {
+      console.log('Chime play failed:', e);
+    }
   };
   
   const showNotification = () => {
