@@ -13,7 +13,7 @@ function App() {
   const [ambientSound, setAmbientSound] = useState('none');
   const [volume, setVolume] = useState(0.3);
   const audioRef = useRef(null);
-  const chimeRef = useRef(null);
+  // const chimeRef = useRef(null); // not used
   
   // Советы по безопасности
   const safetyTips = useMemo(() => [
@@ -107,6 +107,13 @@ function App() {
       audioRef.current.volume = volume;
     }
   }, [ambientSound, isRunning, volume]);
+
+  // Перезагружать источник при смене звука
+  useEffect(() => {
+    if (audioRef.current) {
+      try { audioRef.current.load(); } catch (_) {}
+    }
+  }, [ambientSound]);
   
   // Функции управления
   const handleStart = () => {
@@ -196,9 +203,20 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700 p-4 md:p-8">
       {/* Аудио элементы */}
-      <audio ref={audioRef} loop>
-        <source src={ambientSound === 'forest' ? 'Forest.mp3' : ambientSound === 'forest2' ? 'Forest_2.mp3' : 'Ocean.mp3'} type="audio/mpeg" />
-      </audio>
+      <audio
+        ref={audioRef}
+        loop
+        preload="none"
+        src={
+          ambientSound === 'forest'
+            ? 'Forest.mp3'
+            : ambientSound === 'forest2'
+            ? 'Forest_2.mp3'
+            : ambientSound === 'ocean'
+            ? 'Ocean.mp3'
+            : ''
+        }
+      />
       
       <div className="max-w-7xl mx-auto">
         {/* Заголовок */}
@@ -283,8 +301,8 @@ function App() {
               </div>
               
               {/* Пресеты времени */}
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                {[20, 30, 40].map(preset => (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                {[20, 25, 30, 40].map(preset => (
                   <button
                     key={preset}
                     onClick={() => handlePreset(preset)}
@@ -511,7 +529,7 @@ function QuickNotes() {
           type="text"
           value={newNote}
           onChange={(e) => setNewNote(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && addNote()}
+          onKeyDown={(e) => e.key === 'Enter' && addNote()}
           placeholder="Добавить заметку..."
           className="flex-1 px-3 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -547,5 +565,6 @@ function QuickNotes() {
   );
 }
 
-// Рендеринг приложения
-ReactDOM.render(<App />, document.getElementById('root'));
+// Рендеринг приложения (React 18)
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
