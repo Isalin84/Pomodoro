@@ -565,6 +565,11 @@ function QuickNotes() {
   );
 }
 
-// Рендеринг приложения (React 18)
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+// Рендеринг приложения (React 18 с откатом)
+const container = document.getElementById('root');
+if (ReactDOM.createRoot) {
+  const root = ReactDOM.createRoot(container);
+  root.render(<App />);
+} else {
+  ReactDOM.render(<App />, container);
+}
