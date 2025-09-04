@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Safety Pomodoro — Таймер для профессионалов охраны труда</title>
+  <meta name="description" content="Профессиональный Pomodoro-таймер с советами по безопасности для специалистов по охране труда">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel Standalone для JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Font Awesome для иконок -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    
+    /* Анимации */
+    @keyframes pulse-safety {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+      }
+    }
+    
+    @keyframes slide-in {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .safety-pulse {
+      animation: pulse-safety 2s ease-in-out infinite;
+    }
+    
+    .slide-in {
+      animation: slide-in 0.5s ease-out;
+    }
+    
+    /* Стили для прогресс-кольца */
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+    
+    .progress-ring__circle {
+      transition: stroke-dashoffset 0.35s;
+      transform-origin: 50% 50%;
+    }
+    
+    /* Стиль для диска времени */
+    .time-dial {
+      background: conic-gradient(
+        from 0deg,
+        #10b981 0deg,
+        #10b981 var(--dial-angle),
+        #e5e7eb var(--dial-angle),
+        #e5e7eb 360deg
+      );
+    }
+    
+    /* Стиль для предупреждающей ленты */
+    .hazard-stripe {
+      background: repeating-linear-gradient(
+        45deg,
+        #fbbf24,
+        #fbbf24 10px,
+        #111827 10px,
+        #111827 20px
+      );
+    }
+    
+    /* Glassmorphism эффект */
+    .glass {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Неоморфизм для кнопок */
+    .neo-button {
+      background: linear-gradient(145deg, #ffffff, #f3f4f6);
+      box-shadow: 5px 5px 10px #d1d5db, -5px -5px 10px #ffffff;
+      transition: all 0.3s ease;
+    }
+    
+    .neo-button:hover {
+      box-shadow: 2px 2px 5px #d1d5db, -2px -2px 5px #ffffff;
+    }
+    
+    .neo-button:active {
+      box-shadow: inset 2px 2px 5px #d1d5db, inset -2px -2px 5px #ffffff;
+    }
+    
+    /* Кастомный скроллбар */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f3f4f6;
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #9ca3af;
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <!-- Основное React приложение -->
+  <script type="text/babel" src="app.jsx"></script>
+</body>
+</html>

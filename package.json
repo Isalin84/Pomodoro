@@ -1,0 +1,29 @@
+{
+  "name": "safety-pomodoro",
+  "version": "1.0.0",
+  "description": "Professional Pomodoro timer for safety professionals with ambient sounds and safety tips",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "serve": "npx http-server -p 8000",
+    "deploy": "echo 'Push to GitHub and enable GitHub Pages from Settings'"
+  },
+  "keywords": [
+    "pomodoro",
+    "timer",
+    "safety",
+    "productivity",
+    "focus",
+    "workplace safety"
+  ],
+  "author": "Ivan Salin",
+  "license": "MIT",
+  "homepage": "https://github.com/ivansalin/Pomodoro",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivansalin/Pomodoro.git"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
