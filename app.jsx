@@ -46,6 +46,7 @@ function App() {
   // Статистика
   const [todayMinutes, setTodayMinutes] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [completedTasks, setCompletedTasks] = useState(0);
   
   // Эффект таймера
   useEffect(() => {
@@ -99,14 +100,14 @@ function App() {
   // Управление фоновым звуком
   useEffect(() => {
     if (audioRef.current) {
-      if (ambientSound !== 'none' && isRunning) {
+      if (ambientSound !== 'none') {
         audioRef.current.play().catch(e => console.log('Audio play failed:', e));
       } else {
         audioRef.current.pause();
       }
       audioRef.current.volume = volume;
     }
-  }, [ambientSound, isRunning, volume]);
+  }, [ambientSound, volume]);
 
   // Перезагружать источник при смене звука
   useEffect(() => {
@@ -149,24 +150,14 @@ function App() {
     audio.play().catch(e => console.log('Chime play failed:', e));
   };
   */
-  // Lightweight chime without base64 payload
+  // Звук завершения таймера
   const playChime = () => {
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.6);
+      const audio = new Audio('End_timer.mp3');
+      audio.volume = 0.5;
+      audio.play().catch(e => console.log('End timer sound failed:', e));
     } catch (e) {
-      console.log('Chime play failed:', e);
+      console.log('End timer sound failed:', e);
     }
   };
   
@@ -191,36 +182,6 @@ function App() {
   const remainingSeconds = minutes * 60 + seconds;
   const progress = ((totalSeconds - remainingSeconds) / totalSeconds) * 100;
   
-  // Горячие клавиши
-  useEffect(() => {
-    const handleKeyPress = (e) => {
-      switch(e.key) {
-        case ' ':
-          e.preventDefault();
-          handleStart();
-          break;
-        case 'r':
-        case 'R':
-          handleReset();
-          break;
-        case '1':
-          handlePreset(20);
-          break;
-        case '2':
-          handlePreset(25);
-          break;
-        case '3':
-          handlePreset(30);
-          break;
-        case '4':
-          handlePreset(40);
-          break;
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isRunning, totalMinutes]);
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700 p-4 md:p-8">
@@ -236,6 +197,8 @@ function App() {
             ? 'Forest_2.mp3'
             : ambientSound === 'ocean'
             ? 'Ocean.mp3'
+            : ambientSound === 'construction'
+            ? 'construction_site.mp3'
             : ''
         }
       />
@@ -244,7 +207,7 @@ function App() {
         {/* Заголовок */}
         <header className="text-center mb-8 slide-in">
           <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-full px-6 py-3">
-            <i className="fas fa-hard-hat text-3xl text-yellow-400"></i>
+            <img src="Coloured HH Small.png" alt="Каска" className="w-12 h-12 object-contain" />
             <h1 className="text-3xl md:text-4xl font-bold text-white">Safety Pomodoro</h1>
             <i className="fas fa-shield-alt text-3xl text-green-400"></i>
           </div>
@@ -372,7 +335,7 @@ function App() {
                 <i className="fas fa-music mr-2 text-purple-500"></i>
                 Фоновые звуки
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
                 <button
                   onClick={() => setAmbientSound('none')}
                   className={`py-3 px-4 rounded-xl transition-all ${
@@ -416,6 +379,17 @@ function App() {
                 >
                   <i className="fas fa-water mr-2"></i>
                   Океан
+                </button>
+                <button
+                  onClick={() => setAmbientSound('construction')}
+                  className={`py-3 px-4 rounded-xl transition-all ${
+                    ambientSound === 'construction' 
+                      ? 'bg-orange-500 text-white' 
+                      : 'bg-white hover:bg-gray-50 text-gray-700 shadow'
+                  }`}
+                >
+                  <i className="fas fa-hammer mr-2"></i>
+                  Стройка
                 </button>
               </div>
               <div className="flex items-center gap-3">
@@ -484,30 +458,25 @@ function App() {
                   </span>
                   <span className="text-2xl font-bold text-purple-600">{todayMinutes}</span>
                 </div>
+                <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-xl">
+                  <span className="text-gray-600">
+                    <i className="fas fa-check-double mr-2 text-yellow-500"></i>
+                    Задач
+                  </span>
+                  <span className="text-2xl font-bold text-yellow-600">{completedTasks}</span>
+                </div>
               </div>
             </div>
             
-            {/* Быстрые заметки */}
+            {/* Задачи на день */}
             <div className="glass rounded-2xl p-6 shadow-xl slide-in">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 <i className="fas fa-sticky-note mr-2 text-indigo-500"></i>
-                Быстрые заметки
+                Задачи на день
               </h3>
-              <QuickNotes />
+              <QuickNotes onTaskToggle={(completedCount) => setCompletedTasks(completedCount)} />
             </div>
             
-            {/* Горячие клавиши */}
-            <div className="glass rounded-2xl p-4 shadow-xl slide-in">
-              <h4 className="text-sm font-semibold text-gray-700 mb-2">
-                <i className="fas fa-keyboard mr-2"></i>
-                Горячие клавиши
-              </h4>
-              <div className="text-xs text-gray-600 space-y-1">
-                <div><kbd className="px-2 py-1 bg-gray-200 rounded">Пробел</kbd> — Старт/Пауза</div>
-                <div><kbd className="px-2 py-1 bg-gray-200 rounded">R</kbd> — Сброс таймера</div>
-                <div><kbd className="px-2 py-1 bg-gray-200 rounded">1-4</kbd> — Быстрые пресеты</div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -515,8 +484,8 @@ function App() {
   );
 }
 
-// Компонент быстрых заметок
-function QuickNotes() {
+// Компонент задач на день
+function QuickNotes({ onTaskToggle }) {
   const [notes, setNotes] = useState(() => {
     const saved = localStorage.getItem('pomodoroNotes');
     return saved ? JSON.parse(saved) : [];
@@ -525,7 +494,10 @@ function QuickNotes() {
   
   useEffect(() => {
     localStorage.setItem('pomodoroNotes', JSON.stringify(notes));
-  }, [notes]);
+    // Подсчитываем завершенные задачи и передаем в родительский компонент
+    const completedCount = notes.filter(note => note.completed).length;
+    onTaskToggle(completedCount);
+  }, [notes, onTaskToggle]);
   
   const addNote = () => {
     if (newNote.trim()) {
@@ -552,7 +524,7 @@ function QuickNotes() {
           value={newNote}
           onChange={(e) => setNewNote(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addNote()}
-          placeholder="Добавить заметку..."
+          placeholder="Добавить задачу..."
           className="flex-1 px-3 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
