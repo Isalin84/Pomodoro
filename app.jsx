@@ -1,5 +1,88 @@
 const { useState, useEffect, useRef, useMemo } = React;
 
+// Ripple Button Component
+const RippleButton = ({ children, onClick, className = "", ...props }) => {
+  const [coords, setCoords] = useState({ x: -1, y: -1 });
+  const [isRippling, setIsRippling] = useState(false);
+
+  useEffect(() => {
+    if (coords.x !== -1 && coords.y !== -1) {
+      setIsRippling(true);
+      setTimeout(() => setIsRippling(false), 600);
+    } else setIsRippling(false);
+  }, [coords]);
+
+  useEffect(() => {
+    if (!isRippling) setCoords({ x: -1, y: -1 });
+  }, [isRippling]);
+
+  return (
+    <button
+      className={`ripple-button relative overflow-hidden ${className}`}
+      onClick={e => {
+        const rect = e.target.getBoundingClientRect();
+        setCoords({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        onClick && onClick(e);
+      }}
+      {...props}
+    >
+      {isRippling ? (
+        <span
+          className="ripple absolute w-5 h-5 bg-white/30 rounded-full pointer-events-none"
+          style={{
+            left: coords.x - 10,
+            top: coords.y - 10,
+            animation: 'ripple-effect 0.6s ease-out forwards'
+          }}
+        />
+      ) : null}
+      <span className="relative z-10">{children}</span>
+    </button>
+  );
+};
+
+// Gradient Border Button Component
+const GradientBorderButton = ({ children, onClick, isActive = false, className = "", ...props }) => {
+  return (
+    <button
+      className={`gradient-border-btn relative flex cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-none p-[2px] ${className}`}
+      onClick={onClick}
+      {...props}
+    >
+      <span className={`gradient-border-span relative z-[1] w-full rounded-2xl px-8 py-4 text-lg font-semibold backdrop-blur-md transition-all ${
+        isActive 
+          ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-lg' 
+          : 'bg-white/95 hover:bg-white text-gray-700 shadow'
+      }`}>
+        {children}
+      </span>
+    </button>
+  );
+};
+
+// FadeIn Animation Component
+const FadeIn = ({ children, delay = 0, duration = 500, className = "" }) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+
+  return (
+    <div 
+      className={`transition-all ease-out ${className}`}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+        transitionDuration: `${duration}ms`
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
 // Основной компонент приложения
 function App() {
   // Состояние таймера
@@ -224,7 +307,7 @@ function App() {
         {/* Заголовок */}
         <header className="text-center mb-8 slide-in">
           <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-full px-6 py-3">
-            <img src="Coloured HH Small.png" alt="Каска" className="w-12 h-12 object-contain" />
+            <img src="helmet.png" alt="Каска" className="w-12 h-12 object-contain" />
             <h1 className="text-3xl md:text-4xl font-bold text-white">Safety Pomodoro</h1>
             <i className="fas fa-shield-alt text-3xl text-green-400"></i>
           </div>
@@ -235,7 +318,8 @@ function App() {
           {/* Левая колонка - Таймер */}
           <div className="lg:col-span-2 space-y-6">
             {/* Основной блок таймера */}
-            <div className="glass rounded-3xl p-8 shadow-2xl slide-in">
+            <FadeIn delay={100} duration={800}>
+              <div className="glass rounded-3xl p-8 shadow-2xl slide-in">
               <div className="hazard-stripe h-3 rounded-full mb-6"></div>
               
               {/* Дисплей таймера */}
@@ -282,33 +366,30 @@ function App() {
               
               {/* Кнопки управления */}
               <div className="flex justify-center gap-4 mb-6">
-                <button
+                <GradientBorderButton
                   onClick={handleStart}
-                  className={`px-8 py-4 rounded-2xl font-semibold text-lg transition-all transform hover:scale-105 ${
-                    isRunning 
-                      ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg' 
-                      : 'bg-green-500 hover:bg-green-600 text-white shadow-lg'
-                  }`}
+                  isActive={isRunning}
+                  className="transform hover:scale-105"
                 >
                   <i className={`fas ${isRunning ? 'fa-pause' : 'fa-play'} mr-2`}></i>
                   {isRunning ? 'Пауза' : 'Старт'}
-                </button>
-                <button
+                </GradientBorderButton>
+                <RippleButton
                   onClick={handleReset}
                   className="px-8 py-4 rounded-2xl font-semibold text-lg neo-button transition-all transform hover:scale-105"
                 >
                   <i className="fas fa-redo mr-2"></i>
                   Сброс
-                </button>
+                </RippleButton>
               </div>
               
               {/* Пресеты времени */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                 {[20, 25, 30, 40].map(preset => (
-                  <button
+                  <RippleButton
                     key={preset}
                     onClick={() => handlePreset(preset)}
-                    className={`py-3 rounded-xl font-medium transition-all ${
+                    className={`py-3 rounded-xl font-medium transition-all enhanced-button ${
                       totalMinutes === preset 
                         ? 'bg-blue-500 text-white shadow-md' 
                         : 'bg-white/80 hover:bg-white text-gray-700 shadow'
@@ -316,7 +397,7 @@ function App() {
                   >
                     <i className="fas fa-clock mr-2"></i>
                     {preset} мин
-                  </button>
+                  </RippleButton>
                 ))}
               </div>
               
@@ -344,18 +425,20 @@ function App() {
                   <span>60</span>
                 </div>
               </div>
-            </div>
+              </div>
+            </FadeIn>
             
             {/* Блок управления звуком */}
-            <div className="glass rounded-2xl p-6 shadow-xl slide-in">
+            <FadeIn delay={300} duration={800}>
+              <div className="glass rounded-2xl p-6 shadow-xl slide-in">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 <i className="fas fa-music mr-2 text-purple-500"></i>
                 Фоновые звуки
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-                <button
+                <RippleButton
                   onClick={() => setAmbientSound('none')}
-                  className={`py-3 px-4 rounded-xl transition-all ${
+                  className={`py-3 px-4 rounded-xl transition-all enhanced-button ${
                     ambientSound === 'none' 
                       ? 'bg-gray-500 text-white' 
                       : 'bg-white hover:bg-gray-50 text-gray-700 shadow'
@@ -363,10 +446,10 @@ function App() {
                 >
                   <i className="fas fa-volume-mute mr-2"></i>
                   Тишина
-                </button>
-                <button
+                </RippleButton>
+                <RippleButton
                   onClick={() => setAmbientSound('forest')}
-                  className={`py-3 px-4 rounded-xl transition-all ${
+                  className={`py-3 px-4 rounded-xl transition-all enhanced-button ${
                     ambientSound === 'forest' 
                       ? 'bg-green-500 text-white' 
                       : 'bg-white hover:bg-gray-50 text-gray-700 shadow'
@@ -374,10 +457,10 @@ function App() {
                 >
                   <i className="fas fa-tree mr-2"></i>
                   Лес
-                </button>
-                <button
+                </RippleButton>
+                <RippleButton
                   onClick={() => setAmbientSound('forest2')}
-                  className={`py-3 px-4 rounded-xl transition-all ${
+                  className={`py-3 px-4 rounded-xl transition-all enhanced-button ${
                     ambientSound === 'forest2' 
                       ? 'bg-green-600 text-white' 
                       : 'bg-white hover:bg-gray-50 text-gray-700 shadow'
@@ -385,10 +468,10 @@ function App() {
                 >
                   <i className="fas fa-leaf mr-2"></i>
                   Лес 2
-                </button>
-                <button
+                </RippleButton>
+                <RippleButton
                   onClick={() => setAmbientSound('ocean')}
-                  className={`py-3 px-4 rounded-xl transition-all ${
+                  className={`py-3 px-4 rounded-xl transition-all enhanced-button ${
                     ambientSound === 'ocean' 
                       ? 'bg-blue-500 text-white' 
                       : 'bg-white hover:bg-gray-50 text-gray-700 shadow'
@@ -396,10 +479,10 @@ function App() {
                 >
                   <i className="fas fa-water mr-2"></i>
                   Океан
-                </button>
-                <button
+                </RippleButton>
+                <RippleButton
                   onClick={() => setAmbientSound('construction')}
-                  className={`py-3 px-4 rounded-xl transition-all ${
+                  className={`py-3 px-4 rounded-xl transition-all enhanced-button ${
                     ambientSound === 'construction' 
                       ? 'bg-orange-500 text-white' 
                       : 'bg-white hover:bg-gray-50 text-gray-700 shadow'
@@ -407,7 +490,7 @@ function App() {
                 >
                   <i className="fas fa-hammer mr-2"></i>
                   Стройка
-                </button>
+                </RippleButton>
               </div>
               <div className="flex items-center gap-3">
                 <i className="fas fa-volume-down text-gray-500"></i>
@@ -422,13 +505,15 @@ function App() {
                 />
                 <i className="fas fa-volume-up text-gray-500"></i>
               </div>
-            </div>
+              </div>
+            </FadeIn>
           </div>
           
           {/* Правая колонка - Советы и статистика */}
           <div className="space-y-6">
             {/* Совет по безопасности */}
-            <div className="glass rounded-2xl p-6 shadow-xl slide-in">
+            <FadeIn delay={500} duration={800}>
+              <div className="glass rounded-2xl p-6 shadow-xl slide-in">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center safety-pulse">
                   <i className="fas fa-exclamation-triangle text-gray-800"></i>
@@ -445,10 +530,12 @@ function App() {
                 <i className="fas fa-sync-alt mr-2"></i>
                 Новый совет
               </button>
-            </div>
+              </div>
+            </FadeIn>
             
             {/* Статистика */}
-            <div className="glass rounded-2xl p-6 shadow-xl slide-in">
+            <FadeIn delay={700} duration={800}>
+              <div className="glass rounded-2xl p-6 shadow-xl slide-in">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 <i className="fas fa-chart-line mr-2 text-blue-500"></i>
                 Статистика дня
@@ -483,16 +570,19 @@ function App() {
                   <span className="text-2xl font-bold text-yellow-600">{completedTasks}</span>
                 </div>
               </div>
-            </div>
+              </div>
+            </FadeIn>
             
             {/* Задачи на день */}
-            <div className="glass rounded-2xl p-6 shadow-xl slide-in">
+            <FadeIn delay={900} duration={800}>
+              <div className="glass rounded-2xl p-6 shadow-xl slide-in">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 <i className="fas fa-sticky-note mr-2 text-indigo-500"></i>
                 Задачи на день
               </h3>
               <QuickNotes onTaskToggle={(completedCount) => setCompletedTasks(completedCount)} />
-            </div>
+              </div>
+            </FadeIn>
             
           </div>
         </div>
