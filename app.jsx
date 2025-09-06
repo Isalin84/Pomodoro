@@ -406,7 +406,7 @@ function App() {
   
   return (
     <div 
-      className="min-h-screen p-4 md:p-8 relative"
+      className="min-h-screen p-2 md:p-4 lg:p-8 relative"
       style={{
         backgroundImage: getBackgroundImage() 
           ? `linear-gradient(rgba(102, 126, 234, 0.7), rgba(118, 75, 162, 0.7)), url(${getBackgroundImage()})`
@@ -437,18 +437,18 @@ function App() {
       
       <div className="max-w-7xl mx-auto">
         {/* Заголовок */}
-        <header className="text-center mb-8 slide-in">
-          <div className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-lg rounded-full px-6 py-3 border border-white/30">
+        <header className="text-center mb-4 md:mb-8 slide-in">
+          <div className="inline-flex items-center gap-2 md:gap-3 bg-white/20 backdrop-blur-lg rounded-full px-4 md:px-6 py-2 md:py-3 border border-white/30">
             <a href="https://vk.com/club224447229" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
-              <img src="images/BP.png" alt="BP" className="w-14 h-14 object-contain" />
+              <img src="images/BP.png" alt="BP" className="w-10 h-10 md:w-14 md:h-14 object-contain" />
             </a>
-            <h1 className="text-3xl md:text-4xl font-bold text-white">Safety Pomodoro</h1>
+            <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-white">Safety Pomodoro</h1>
           </div>
-          <p className="text-white/80 mt-3 text-lg">{t.subtitle}</p>
+          <p className="text-white/80 mt-2 md:mt-3 text-sm md:text-lg">{t.subtitle}</p>
         </header>
         
         {/* Переключатель языков */}
-        <div className="absolute top-4 right-4 z-50">
+        <div className="flex justify-center mb-4 md:absolute md:top-4 md:right-4 md:mb-0 z-50">
           <div className="flex gap-2 bg-white/20 backdrop-blur-lg rounded-full p-1 border border-white/30">
             <button
               onClick={() => setLanguage('ru')}
