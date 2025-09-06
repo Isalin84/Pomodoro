@@ -282,9 +282,36 @@ function App() {
   const remainingSeconds = minutes * 60 + seconds;
   const progress = ((totalSeconds - remainingSeconds) / totalSeconds) * 100;
   
+  // Функция для получения фонового изображения
+  const getBackgroundImage = () => {
+    switch (ambientSound) {
+      case 'forest':
+        return 'images/forest_1.webp';
+      case 'forest2':
+        return 'images/forest_2.webp';
+      case 'ocean':
+        return 'images/ocean.webp';
+      case 'construction':
+        return 'images/construction.webp';
+      default:
+        return null;
+    }
+  };
+  
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700 p-4 md:p-8">
+    <div 
+      className="min-h-screen p-4 md:p-8 relative"
+      style={{
+        backgroundImage: getBackgroundImage() 
+          ? `linear-gradient(rgba(102, 126, 234, 0.7), rgba(118, 75, 162, 0.7)), url(${getBackgroundImage()})`
+          : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
       {/* Аудио элементы */}
       <audio
         ref={audioRef}
@@ -306,12 +333,13 @@ function App() {
       <div className="max-w-7xl mx-auto">
         {/* Заголовок */}
         <header className="text-center mb-8 slide-in">
-          <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-full px-6 py-3">
-            <img src="helmet.png" alt="Каска" className="w-12 h-12 object-contain" />
+          <div className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-lg rounded-full px-6 py-3 border border-white/30">
+            <a href="https://vk.com/club224447229" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+              <img src="images/BP.png" alt="BP" className="w-14 h-14 object-contain" />
+            </a>
             <h1 className="text-3xl md:text-4xl font-bold text-white">Safety Pomodoro</h1>
-            <i className="fas fa-shield-alt text-3xl text-green-400"></i>
           </div>
-          <p className="text-white/80 mt-3 text-lg">Продуктивность с заботой о безопасности</p>
+          <p className="text-white/80 mt-3 text-lg">ПРОДУКТИВНОСТЬ С ЗАБОТОЙ О БЕЗОПАСНОСТИ</p>
         </header>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -319,7 +347,12 @@ function App() {
           <div className="lg:col-span-2 space-y-6">
             {/* Основной блок таймера */}
             <FadeIn delay={100} duration={800}>
-              <div className="glass rounded-3xl p-8 shadow-2xl slide-in">
+              <div className="glass rounded-3xl p-8 shadow-2xl slide-in" style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)'
+              }}>
               <div className="hazard-stripe h-3 rounded-full mb-6"></div>
               
               {/* Дисплей таймера */}
@@ -430,7 +463,12 @@ function App() {
             
             {/* Блок управления звуком */}
             <FadeIn delay={300} duration={800}>
-              <div className="glass rounded-2xl p-6 shadow-xl slide-in">
+              <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)'
+              }}>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 <i className="fas fa-music mr-2 text-purple-500"></i>
                 Фоновые звуки
@@ -513,7 +551,12 @@ function App() {
           <div className="space-y-6">
             {/* Совет по безопасности */}
             <FadeIn delay={500} duration={800}>
-              <div className="glass rounded-2xl p-6 shadow-xl slide-in">
+              <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)'
+              }}>
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center safety-pulse">
                   <i className="fas fa-exclamation-triangle text-gray-800"></i>
@@ -535,7 +578,12 @@ function App() {
             
             {/* Статистика */}
             <FadeIn delay={700} duration={800}>
-              <div className="glass rounded-2xl p-6 shadow-xl slide-in">
+              <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)'
+              }}>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 <i className="fas fa-chart-line mr-2 text-blue-500"></i>
                 Статистика дня
@@ -575,7 +623,12 @@ function App() {
             
             {/* Задачи на день */}
             <FadeIn delay={900} duration={800}>
-              <div className="glass rounded-2xl p-6 shadow-xl slide-in">
+              <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)'
+              }}>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 <i className="fas fa-sticky-note mr-2 text-indigo-500"></i>
                 Задачи на день
