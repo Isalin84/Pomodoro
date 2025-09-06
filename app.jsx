@@ -105,7 +105,7 @@ function App() {
   const translations = {
     ru: {
       title: "Safety Pomodoro",
-      subtitle: "ПРОДУКТИВНОСТЬ С ЗАБОТОЙ О БЕЗОПАСНОСТИ",
+      subtitle: "ПРОДУКТИВНАЯ БЕЗОПАСНОСТЬ",
       onPause: "На паузе",
       inWork: "В работе",
       start: "Старт",
@@ -132,7 +132,7 @@ function App() {
     },
     en: {
       title: "Safety Pomodoro",
-      subtitle: "PRODUCTIVITY WITH SAFETY CARE",
+      subtitle: "PRODUCTIVIE SAFETY",
       onPause: "On pause",
       inWork: "In work",
       start: "Start",
