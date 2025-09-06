@@ -132,7 +132,7 @@ function App() {
     },
     en: {
       title: "Safety Pomodoro",
-      subtitle: "PRODUCTIVIE SAFETY",
+      subtitle: "PRODUCTIVE SAFETY",
       onPause: "On pause",
       inWork: "In work",
       start: "Start",
