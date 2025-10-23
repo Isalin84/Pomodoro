@@ -90,7 +90,6 @@ function App() {
   const [seconds, setSeconds] = useState(0);
   const [totalMinutes, setTotalMinutes] = useState(25);
   const [isRunning, setIsRunning] = useState(false);
-  const [sessionCount, setSessionCount] = useState(0);
   
   // Состояние аудио
   const [ambientSound, setAmbientSound] = useState('none');
@@ -128,7 +127,8 @@ function App() {
       tasks: "Задач",
       dailyTasks: "Задачи на день",
       addTask: "Добавить задачу...",
-      completed: "Завершено"
+      completed: "Завершено",
+      clearCompleted: "Очистить выполненные"
     },
     en: {
       title: "Safety Pomodoro",
@@ -155,7 +155,8 @@ function App() {
       tasks: "Tasks",
       dailyTasks: "Daily tasks",
       addTask: "Add task...",
-      completed: "Completed"
+      completed: "Completed",
+      clearCompleted: "Clear completed"
     }
   };
   
@@ -237,10 +238,20 @@ function App() {
     safetyTips[Math.floor(Math.random() * safetyTips.length)]
   );
   
-  // Статистика
-  const [todayMinutes, setTodayMinutes] = useState(0);
-  const [streak, setStreak] = useState(0);
+  // Статистика с сохранением в localStorage
+  const [todayMinutes, setTodayMinutes] = useState(() => {
+    const saved = localStorage.getItem('pomodoroTodayMinutes');
+    return saved ? parseInt(saved) : 0;
+  });
+  const [streak, setStreak] = useState(() => {
+    const saved = localStorage.getItem('pomodoroStreak');
+    return saved ? parseInt(saved) : 0;
+  });
   const [completedTasks, setCompletedTasks] = useState(0);
+  const [sessionCount, setSessionCount] = useState(() => {
+    const saved = localStorage.getItem('pomodoroSessionCount');
+    return saved ? parseInt(saved) : 0;
+  });
   
   // Эффект таймера
   useEffect(() => {
@@ -320,6 +331,19 @@ function App() {
       audioRef.current.volume = volume;
     }
   }, [volume]);
+
+  // Сохранение статистики в localStorage
+  useEffect(() => {
+    localStorage.setItem('pomodoroTodayMinutes', todayMinutes.toString());
+  }, [todayMinutes]);
+
+  useEffect(() => {
+    localStorage.setItem('pomodoroStreak', streak.toString());
+  }, [streak]);
+
+  useEffect(() => {
+    localStorage.setItem('pomodoroSessionCount', sessionCount.toString());
+  }, [sessionCount]);
   
   // Функции управления
   const handleStart = () => {
@@ -809,6 +833,19 @@ function QuickNotes({ onTaskToggle, translations }) {
     setNotes(notes.filter(note => note.id !== id));
   };
   
+  // Сортируем задачи: невыполненные наверху, выполненные внизу
+  const sortedNotes = [...notes].sort((a, b) => {
+    if (a.completed === b.completed) return 0;
+    return a.completed ? 1 : -1;
+  });
+
+  const clearCompleted = () => {
+    setNotes(notes.filter(note => !note.completed));
+  };
+
+  const completedCount = notes.filter(note => note.completed).length;
+  const totalCount = notes.length;
+
   return (
     <div>
       <div className="flex gap-2 mb-3">
@@ -827,21 +864,42 @@ function QuickNotes({ onTaskToggle, translations }) {
           <i className="fas fa-plus"></i>
         </button>
       </div>
+
+      {totalCount > 0 && (
+        <div className="flex justify-between items-center mb-3 px-1">
+          <span className="text-sm text-gray-600">
+            {translations.completed}: {completedCount} / {totalCount}
+          </span>
+          {completedCount > 0 && (
+            <button
+              onClick={clearCompleted}
+              className="text-xs text-red-500 hover:text-red-700 transition-all"
+            >
+              <i className="fas fa-broom mr-1"></i>
+              {translations.clearCompleted || 'Очистить выполненные'}
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="space-y-2 max-h-48 overflow-y-auto">
-        {notes.map(note => (
-          <div key={note.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+        {sortedNotes.map(note => (
+          <div
+            key={note.id}
+            className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg transition-all duration-300 hover:bg-gray-100"
+          >
             <input
               type="checkbox"
               checked={note.completed}
               onChange={() => toggleNote(note.id)}
-              className="w-4 h-4 text-blue-600"
+              className="w-4 h-4 text-blue-600 cursor-pointer"
             />
-            <span className={`flex-1 text-sm ${note.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+            <span className={`flex-1 text-sm transition-all duration-200 ${note.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>
               {note.text}
             </span>
             <button
               onClick={() => deleteNote(note.id)}
-              className="text-red-500 hover:text-red-700 text-sm"
+              className="text-red-500 hover:text-red-700 text-sm transition-colors"
             >
               <i className="fas fa-trash"></i>
             </button>
