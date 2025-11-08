@@ -227,12 +227,79 @@
     .enhanced-button:hover::before {
       left: 100%;
     }
+
+    /* 3D Card Hover Effects */
+    .card-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.3s ease;
+    }
+
+    .card-3d:hover {
+      transform: translateY(-4px) rotateX(2deg);
+    }
+
+    /* Fade in animation */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fadeIn {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    /* Shimmer effect for loading states */
+    @keyframes shimmer {
+      0% {
+        background-position: -1000px 0;
+      }
+      100% {
+        background-position: 1000px 0;
+      }
+    }
+
+    .shimmer {
+      animation: shimmer 2s infinite linear;
+      background: linear-gradient(to right, #f0f0f0 4%, #f8f8f8 25%, #f0f0f0 36%);
+      background-size: 1000px 100%;
+    }
+
+    /* Smooth hover for glass cards */
+    .glass-hover {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-hover:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Pulse animation for current date */
+    @keyframes pulse-glow {
+      0%, 100% {
+        box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+      }
+    }
+
+    .animate-pulse {
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
   </style>
 </head>
 <body>
   <div id="root"></div>
   
   <!-- Основное React приложение (cache-busting for GH Pages) -->
-  <script type="text/babel" data-presets="env,react" src="app.jsx?v=10"></script>
+  <script type="text/babel" data-presets="env,react" src="app.jsx?v=11"></script>
 </body>
 </html>
