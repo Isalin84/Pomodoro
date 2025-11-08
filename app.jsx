@@ -1,5 +1,128 @@
 const { useState, useEffect, useRef, useMemo } = React;
 
+// Calendar Component
+const MiniCalendar = ({ translations }) => {
+  const [currentDate] = useState(new Date());
+
+  const getDaysInMonth = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    return { daysInMonth, startingDayOfWeek, year, month };
+  };
+
+  const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(currentDate);
+  const today = currentDate.getDate();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+
+  const monthNames = {
+    ru: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+    en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  };
+
+  const dayNames = {
+    ru: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+    en: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+  };
+
+  const lang = translations.title === "Safety Pomodoro" ? 'ru' : 'en';
+
+  const days = [];
+  for (let i = 0; i < startingDayOfWeek; i++) {
+    days.push(<div key={`empty-${i}`} className="h-8"></div>);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const isToday = day === today && month === currentMonth && year === currentYear;
+    days.push(
+      <div
+        key={day}
+        className={`h-8 flex items-center justify-center text-sm font-medium rounded-lg transition-all ${
+          isToday
+            ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg scale-110 animate-pulse'
+            : 'text-gray-700 hover:bg-gray-100'
+        }`}
+      >
+        {day}
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl p-4 shadow-sm">
+      <div className="text-center mb-3">
+        <h4 className="text-lg font-bold text-gray-800">{monthNames[lang][month]} {year}</h4>
+      </div>
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {dayNames[lang].map((day, index) => (
+          <div key={index} className="h-8 flex items-center justify-center text-xs font-semibold text-gray-500">
+            {day}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {days}
+      </div>
+    </div>
+  );
+};
+
+// Shimmer Loading Component
+const ShimmerCard = () => (
+  <div className="animate-pulse bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] rounded-xl h-20"></div>
+);
+
+// Tooltip Component
+const Tooltip = ({ children, text, position = "top" }) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  const positionClasses = {
+    top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
+    bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
+    left: 'right-full top-1/2 -translate-y-1/2 mr-2',
+    right: 'left-full top-1/2 -translate-y-1/2 ml-2'
+  };
+
+  return (
+    <div className="relative inline-block">
+      <div
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+      >
+        {children}
+      </div>
+      {isVisible && (
+        <div className={`absolute ${positionClasses[position]} z-50 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg shadow-lg whitespace-nowrap animate-fadeIn`}>
+          {text}
+          <div className="absolute w-2 h-2 bg-gray-900 transform rotate-45 left-1/2 -translate-x-1/2 -bottom-1"></div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Badge Component
+const Badge = ({ children, variant = "default", className = "" }) => {
+  const variants = {
+    default: 'bg-blue-100 text-blue-800',
+    success: 'bg-green-100 text-green-800',
+    warning: 'bg-yellow-100 text-yellow-800',
+    danger: 'bg-red-100 text-red-800',
+    purple: 'bg-purple-100 text-purple-800'
+  };
+
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}>
+      {children}
+    </span>
+  );
+};
+
 // Ripple Button Component
 const RippleButton = ({ children, onClick, className = "", ...props }) => {
   const [coords, setCoords] = useState({ x: -1, y: -1 });
@@ -128,7 +251,15 @@ function App() {
       dailyTasks: "Задачи на день",
       addTask: "Добавить задачу...",
       completed: "Завершено",
-      clearCompleted: "Очистить выполненные"
+      clearCompleted: "Очистить выполненные",
+      calendar: "Календарь",
+      today: "Сегодня",
+      taskArchive: "Архив задач",
+      viewArchive: "Показать архив",
+      hideArchive: "Скрыть архив",
+      completedOn: "Завершено",
+      noArchivedTasks: "Нет архивных задач",
+      clearArchive: "Очистить архив"
     },
     en: {
       title: "Safety Pomodoro",
@@ -156,7 +287,15 @@ function App() {
       dailyTasks: "Daily tasks",
       addTask: "Add task...",
       completed: "Completed",
-      clearCompleted: "Clear completed"
+      clearCompleted: "Clear completed",
+      calendar: "Calendar",
+      today: "Today",
+      taskArchive: "Task Archive",
+      viewArchive: "View archive",
+      hideArchive: "Hide archive",
+      completedOn: "Completed on",
+      noArchivedTasks: "No archived tasks",
+      clearArchive: "Clear archive"
     }
   };
   
@@ -746,40 +885,64 @@ function App() {
                 {t.dailyStats}
               </h3>
               <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
-                  <span className="text-gray-600">
-                    <i className="fas fa-fire mr-2 text-orange-500"></i>
-                    {t.series}
-                  </span>
-                  <span className="text-2xl font-bold text-blue-600">{streak}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-green-50 rounded-xl">
-                  <span className="text-gray-600">
-                    <i className="fas fa-check-circle mr-2 text-green-500"></i>
-                    {t.sessions}
-                  </span>
-                  <span className="text-2xl font-bold text-green-600">{sessionCount}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
-                  <span className="text-gray-600">
-                    <i className="fas fa-clock mr-2 text-purple-500"></i>
-                    {t.minutesCount}
-                  </span>
-                  <span className="text-2xl font-bold text-purple-600">{todayMinutes}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-xl">
-                  <span className="text-gray-600">
-                    <i className="fas fa-check-double mr-2 text-yellow-500"></i>
-                    {t.tasks}
-                  </span>
-                  <span className="text-2xl font-bold text-yellow-600">{completedTasks}</span>
-                </div>
+                <Tooltip text={language === 'ru' ? 'Количество завершенных Pomodoro сессий подряд' : 'Number of completed Pomodoro sessions in a row'}>
+                  <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all cursor-pointer card-3d">
+                    <span className="text-gray-600">
+                      <i className="fas fa-fire mr-2 text-orange-500"></i>
+                      {t.series}
+                    </span>
+                    <span className="text-2xl font-bold text-blue-600">{streak}</span>
+                  </div>
+                </Tooltip>
+                <Tooltip text={language === 'ru' ? 'Общее количество завершенных сессий сегодня' : 'Total completed sessions today'}>
+                  <div className="flex justify-between items-center p-3 bg-green-50 rounded-xl hover:bg-green-100 transition-all cursor-pointer card-3d">
+                    <span className="text-gray-600">
+                      <i className="fas fa-check-circle mr-2 text-green-500"></i>
+                      {t.sessions}
+                    </span>
+                    <span className="text-2xl font-bold text-green-600">{sessionCount}</span>
+                  </div>
+                </Tooltip>
+                <Tooltip text={language === 'ru' ? 'Сколько минут вы продуктивно работали сегодня' : 'How many minutes you worked productively today'}>
+                  <div className="flex justify-between items-center p-3 bg-purple-50 rounded-xl hover:bg-purple-100 transition-all cursor-pointer card-3d">
+                    <span className="text-gray-600">
+                      <i className="fas fa-clock mr-2 text-purple-500"></i>
+                      {t.minutesCount}
+                    </span>
+                    <span className="text-2xl font-bold text-purple-600">{todayMinutes}</span>
+                  </div>
+                </Tooltip>
+                <Tooltip text={language === 'ru' ? 'Количество завершенных задач' : 'Number of completed tasks'}>
+                  <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition-all cursor-pointer card-3d">
+                    <span className="text-gray-600">
+                      <i className="fas fa-check-double mr-2 text-yellow-500"></i>
+                      {t.tasks}
+                    </span>
+                    <span className="text-2xl font-bold text-yellow-600">{completedTasks}</span>
+                  </div>
+                </Tooltip>
               </div>
               </div>
             </FadeIn>
             
-            {/* Задачи на день */}
+            {/* Календарь */}
             <FadeIn delay={900} duration={800}>
+              <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)'
+              }}>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                <i className="fas fa-calendar-alt mr-2 text-pink-500"></i>
+                {t.calendar}
+              </h3>
+              <MiniCalendar translations={t} />
+              </div>
+            </FadeIn>
+
+            {/* Задачи на день */}
+            <FadeIn delay={1100} duration={800}>
               <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 backdropFilter: 'blur(30px)',
@@ -790,10 +953,10 @@ function App() {
                 <i className="fas fa-sticky-note mr-2 text-indigo-500"></i>
                 {t.dailyTasks}
               </h3>
-              <QuickNotes onTaskToggle={(completedCount) => setCompletedTasks(completedCount)} translations={t} />
+              <QuickNotes onTaskToggle={(completedCount) => setCompletedTasks(completedCount)} translations={t} language={language} />
               </div>
             </FadeIn>
-            
+
           </div>
         </div>
       </div>
@@ -802,37 +965,46 @@ function App() {
 }
 
 // Компонент задач на день
-function QuickNotes({ onTaskToggle, translations }) {
+function QuickNotes({ onTaskToggle, translations, language }) {
   const [notes, setNotes] = useState(() => {
     const saved = localStorage.getItem('pomodoroNotes');
     return saved ? JSON.parse(saved) : [];
   });
   const [newNote, setNewNote] = useState('');
-  
+  const [archive, setArchive] = useState(() => {
+    const saved = localStorage.getItem('pomodoroArchive');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showArchive, setShowArchive] = useState(false);
+
   useEffect(() => {
     localStorage.setItem('pomodoroNotes', JSON.stringify(notes));
     // Подсчитываем завершенные задачи и передаем в родительский компонент
     const completedCount = notes.filter(note => note.completed).length;
     onTaskToggle(completedCount);
   }, [notes, onTaskToggle]);
-  
+
+  useEffect(() => {
+    localStorage.setItem('pomodoroArchive', JSON.stringify(archive));
+  }, [archive]);
+
   const addNote = () => {
     if (newNote.trim()) {
-      setNotes([...notes, { id: Date.now(), text: newNote, completed: false }]);
+      setNotes([...notes, { id: Date.now(), text: newNote, completed: false, createdAt: new Date().toISOString() }]);
       setNewNote('');
     }
   };
-  
+
   const toggleNote = (id) => {
-    setNotes(notes.map(note => 
+    setNotes(notes.map(note =>
       note.id === id ? { ...note, completed: !note.completed } : note
     ));
   };
-  
+
   const deleteNote = (id) => {
     setNotes(notes.filter(note => note.id !== id));
   };
-  
+
   // Сортируем задачи: невыполненные наверху, выполненные внизу
   const sortedNotes = [...notes].sort((a, b) => {
     if (a.completed === b.completed) return 0;
@@ -840,7 +1012,32 @@ function QuickNotes({ onTaskToggle, translations }) {
   });
 
   const clearCompleted = () => {
+    // Архивируем завершенные задачи перед удалением
+    const completedNotes = notes.filter(note => note.completed);
+    const archivedTasks = completedNotes.map(note => ({
+      ...note,
+      archivedAt: new Date().toISOString()
+    }));
+    setArchive([...archivedTasks, ...archive]);
     setNotes(notes.filter(note => !note.completed));
+  };
+
+  const clearArchive = () => {
+    if (window.confirm(translations.clearArchive + '?')) {
+      setArchive([]);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const options = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+    return date.toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US', options);
   };
 
   const completedCount = notes.filter(note => note.completed).length;
@@ -906,6 +1103,53 @@ function QuickNotes({ onTaskToggle, translations }) {
           </div>
         ))}
       </div>
+
+      {/* Архив задач */}
+      {archive.length > 0 && (
+        <div className="mt-4">
+          <button
+            onClick={() => setShowArchive(!showArchive)}
+            className="w-full py-2 px-3 bg-gradient-to-r from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 text-purple-700 rounded-lg transition-all flex items-center justify-between text-sm font-medium"
+          >
+            <span>
+              <i className={`fas fa-archive mr-2`}></i>
+              {translations.taskArchive} ({archive.length})
+            </span>
+            <i className={`fas fa-chevron-${showArchive ? 'up' : 'down'} transition-transform`}></i>
+          </button>
+
+          {showArchive && (
+            <div className="mt-3 space-y-2 max-h-64 overflow-y-auto animate-fadeIn">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs text-gray-500">{translations.noArchivedTasks}</span>
+                <button
+                  onClick={clearArchive}
+                  className="text-xs text-red-500 hover:text-red-700 transition-all"
+                >
+                  <i className="fas fa-trash-alt mr-1"></i>
+                  {translations.clearArchive}
+                </button>
+              </div>
+              {archive.map((task, index) => (
+                <div
+                  key={task.id || index}
+                  className="p-3 bg-gradient-to-r from-gray-50 to-purple-50 rounded-lg border-l-4 border-purple-300"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-700 line-through mb-1">{task.text}</p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <i className="fas fa-check-circle text-green-500"></i>
+                        <span>{translations.completedOn}: {formatDate(task.archivedAt)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
