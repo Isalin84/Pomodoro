@@ -1,6 +1,63 @@
 const { useState, useEffect, useRef, useMemo, useCallback } = React;
 
 /* ─────────────────────────────────────────
+   MINI CALENDAR
+───────────────────────────────────────── */
+const MiniCalendar = ({ language }) => {
+  const [currentDate] = useState(new Date());
+  const today = currentDate.getDate();
+  const month = currentDate.getMonth();
+  const year  = currentDate.getFullYear();
+
+  const firstDay   = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const monthNames = {
+    ru: ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
+    en: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+  };
+  const dayNames = {
+    ru: ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'],
+    en: ['Su','Mo','Tu','We','Th','Fr','Sa'],
+  };
+
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  return (
+    <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="text-center mb-3">
+        <span className="text-sm font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          {monthNames[language][month]} {year}
+        </span>
+      </div>
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {dayNames[language].map(d => (
+          <div key={d} className="h-6 flex items-center justify-center text-xs font-semibold" style={{ color: 'rgba(212,175,55,0.55)', fontFamily: 'Montserrat, sans-serif' }}>
+            {d}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((day, i) => (
+          <div
+            key={i}
+            className="h-7 flex items-center justify-center text-xs rounded-lg transition-all"
+            style={day === today
+              ? { background: `linear-gradient(135deg, #D4AF37, #C4A032)`, color: '#0B1D3A', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', boxShadow: '0 0 8px rgba(212,175,55,0.5)' }
+              : { color: day ? 'rgba(255,255,255,0.60)' : 'transparent' }
+            }
+          >
+            {day || ''}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────
    BRAND CONSTANTS
 ───────────────────────────────────────── */
 const BRAND = {
@@ -391,6 +448,7 @@ function App() {
       dailyTasks:'Задачи на день', addTask:'Добавить задачу...',
       completed:'Завершено', madeAt:'Создано с',
       sessionDone:'🎉 Сессия завершена! Время для перерыва',
+      calendar:'Календарь',
     },
     en: {
       title:'Safety Pomodoro', subtitle:'PRODUCTIVE SAFETY',
@@ -406,6 +464,7 @@ function App() {
       dailyTasks:'Daily tasks', addTask:'Add task...',
       completed:'Completed', madeAt:'Made with',
       sessionDone:'🎉 Session complete! Time for a break',
+      calendar:'Calendar',
     },
   };
 
@@ -894,6 +953,17 @@ function App() {
                   {t.dailyTasks}
                 </h3>
                 <QuickNotes onTaskToggle={setCompletedTasks} translations={t} />
+              </div>
+            </FadeIn>
+
+            {/* CALENDAR */}
+            <FadeIn delay={1100} duration={800}>
+              <div className="rounded-2xl p-5 shadow-xl slide-in" style={glassStyle}>
+                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <span style={{ color: '#f472b6' }}><i className="fas fa-calendar-alt"></i></span>
+                  {t.calendar}
+                </h3>
+                <MiniCalendar language={language} />
               </div>
             </FadeIn>
 
