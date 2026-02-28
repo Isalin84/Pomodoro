@@ -36,7 +36,7 @@
   <style>
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #0a1628 0%, #0f2444 100%);
       min-height: 100vh;
     }
     
@@ -85,10 +85,10 @@
     .time-dial {
       background: conic-gradient(
         from 0deg,
-        #10b981 0deg,
-        #10b981 var(--dial-angle),
-        #e5e7eb var(--dial-angle),
-        #e5e7eb 360deg
+        #f59e0b 0deg,
+        #f59e0b var(--dial-angle),
+        rgba(255,255,255,0.1) var(--dial-angle),
+        rgba(255,255,255,0.1) 360deg
       );
     }
     
@@ -112,39 +112,74 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     }
     
-    /* Неоморфизм для кнопок */
+    /* Неоморфизм для кнопок - тёмная тема */
     .neo-button {
-      background: linear-gradient(145deg, #ffffff, #f3f4f6);
-      box-shadow: 5px 5px 10px #d1d5db, -5px -5px 10px #ffffff;
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 4px 4px 12px rgba(0,0,0,0.35), -2px -2px 8px rgba(255,255,255,0.05);
+      color: white;
       transition: all 0.3s ease;
     }
-    
+
     .neo-button:hover {
-      box-shadow: 2px 2px 5px #d1d5db, -2px -2px 5px #ffffff;
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.4), -1px -1px 4px rgba(255,255,255,0.07);
     }
-    
+
     .neo-button:active {
-      box-shadow: inset 2px 2px 5px #d1d5db, inset -2px -2px 5px #ffffff;
+      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.4), inset -1px -1px 4px rgba(255,255,255,0.05);
     }
     
     /* Кастомный скроллбар */
     ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
     }
-    
+
     ::-webkit-scrollbar-track {
-      background: #f3f4f6;
+      background: rgba(255,255,255,0.05);
       border-radius: 10px;
     }
-    
+
     ::-webkit-scrollbar-thumb {
-      background: #9ca3af;
+      background: rgba(245,158,11,0.4);
       border-radius: 10px;
     }
-    
+
     ::-webkit-scrollbar-thumb:hover {
-      background: #6b7280;
+      background: rgba(245,158,11,0.7);
+    }
+
+    /* Range input thumb */
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #f59e0b;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid rgba(255,255,255,0.3);
+      box-shadow: 0 0 6px rgba(245,158,11,0.6);
+    }
+
+    input[type=range]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: #f59e0b;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+
+    /* Placeholder color for task input */
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.35);
+    }
+
+    /* Subtle glow on active timer */
+    @keyframes amber-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(245,158,11,0.15), 0 8px 32px rgba(0,0,0,0.3); }
+      50% { box-shadow: 0 0 35px rgba(245,158,11,0.25), 0 8px 32px rgba(0,0,0,0.3); }
     }
     
     /* Ripple Effect Animation */
@@ -191,11 +226,11 @@
       border-radius: 16px;
       background-image: conic-gradient(
         from var(--animate-duration) at 50% 50%,
-        #10b981 0%,
-        #3b82f6 25%,
-        #8b5cf6 50%,
-        #f59e0b 75%,
-        #10b981 100%
+        #fbbf24 0%,
+        #f59e0b 25%,
+        #ffffff 50%,
+        #d97706 75%,
+        #fbbf24 100%
       );
       animation: rotate-gradient 3s infinite linear;
       z-index: -1;
@@ -233,6 +268,6 @@
   <div id="root"></div>
   
   <!-- Основное React приложение (cache-busting for GH Pages) -->
-  <script type="text/babel" data-presets="env,react" src="app.jsx?v=10"></script>
+  <script type="text/babel" data-presets="env,react" src="app.jsx?v=11"></script>
 </body>
 </html>

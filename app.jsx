@@ -1,5 +1,13 @@
 const { useState, useEffect, useRef, useMemo } = React;
 
+// Glass card style (shared)
+const glassStyle = {
+  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  backdropFilter: 'blur(30px)',
+  WebkitBackdropFilter: 'blur(30px)',
+  border: '1px solid rgba(255, 255, 255, 0.12)'
+};
+
 // Ripple Button Component
 const RippleButton = ({ children, onClick, className = "", ...props }) => {
   const [coords, setCoords] = useState({ x: -1, y: -1 });
@@ -50,9 +58,9 @@ const GradientBorderButton = ({ children, onClick, isActive = false, className =
       {...props}
     >
       <span className={`gradient-border-span relative z-[1] w-full rounded-2xl px-8 py-4 text-lg font-semibold backdrop-blur-md transition-all ${
-        isActive 
-          ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-lg' 
-          : 'bg-white/95 hover:bg-white text-gray-700 shadow'
+        isActive
+          ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-gray-900 shadow-lg'
+          : 'bg-white/10 hover:bg-white/15 text-white border border-white/20'
       }`}>
         {children}
       </span>
@@ -70,7 +78,7 @@ const FadeIn = ({ children, delay = 0, duration = 500, className = "" }) => {
   }, [delay]);
 
   return (
-    <div 
+    <div
       className={`transition-all ease-out ${className}`}
       style={{
         opacity: isVisible ? 1 : 0,
@@ -91,16 +99,15 @@ function App() {
   const [totalMinutes, setTotalMinutes] = useState(25);
   const [isRunning, setIsRunning] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
-  
+
   // Состояние аудио
   const [ambientSound, setAmbientSound] = useState('none');
   const [volume, setVolume] = useState(0.5);
   const audioRef = useRef(null);
-  
+
   // Состояние языка
   const [language, setLanguage] = useState('ru');
-  // const chimeRef = useRef(null); // not used
-  
+
   // Переводы
   const translations = {
     ru: {
@@ -128,7 +135,8 @@ function App() {
       tasks: "Задач",
       dailyTasks: "Задачи на день",
       addTask: "Добавить задачу...",
-      completed: "Завершено"
+      completed: "Завершено",
+      madeAt: "Создано в"
     },
     en: {
       title: "Safety Pomodoro",
@@ -155,10 +163,11 @@ function App() {
       tasks: "Tasks",
       dailyTasks: "Daily tasks",
       addTask: "Add task...",
-      completed: "Completed"
+      completed: "Completed",
+      madeAt: "Made at"
     }
   };
-  
+
   // Советы по безопасности на двух языках
   const safetyTipsTranslations = {
     ru: [
@@ -226,42 +235,38 @@ function App() {
       "📈 Employee safety engagement index = company maturity KPI"
     ]
   };
-  
+
   const t = translations[language];
-  
+
   // Советы по безопасности с учетом языка
   const safetyTips = useMemo(() => safetyTipsTranslations[language], [language]);
-  
-  
-  const [currentTip, setCurrentTip] = useState(() => 
+
+  const [currentTip, setCurrentTip] = useState(() =>
     safetyTips[Math.floor(Math.random() * safetyTips.length)]
   );
-  
+
   // Статистика
   const [todayMinutes, setTodayMinutes] = useState(0);
   const [streak, setStreak] = useState(0);
   const [completedTasks, setCompletedTasks] = useState(0);
-  
+
   // Эффект таймера
   useEffect(() => {
     let interval = null;
-    
+
     if (isRunning) {
       interval = setInterval(() => {
         setSeconds(prevSeconds => {
           if (prevSeconds === 0) {
             if (minutes === 0) {
-              // Таймер завершен
               setIsRunning(false);
               playChime();
               setSessionCount(prev => prev + 1);
               setTodayMinutes(prev => prev + totalMinutes);
               setStreak(prev => prev + 1);
               showNotification();
-              // Сброс таймера
               setMinutes(totalMinutes);
               setSeconds(0);
-              // Новый совет
               setCurrentTip(safetyTips[Math.floor(Math.random() * safetyTips.length)]);
               return 0;
             }
@@ -274,39 +279,33 @@ function App() {
     } else if (!isRunning && interval) {
       clearInterval(interval);
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [isRunning, minutes, totalMinutes, safetyTips]);
-  
+
   // Смена советов каждые 30 секунд во время работы
   useEffect(() => {
     if (!isRunning) return;
-    
     const tipInterval = setInterval(() => {
       setCurrentTip(safetyTips[Math.floor(Math.random() * safetyTips.length)]);
     }, 30000);
-    
     return () => clearInterval(tipInterval);
   }, [isRunning, safetyTips]);
-  
+
   // Обновление текущего совета при смене языка
   useEffect(() => {
     setCurrentTip(safetyTips[Math.floor(Math.random() * safetyTips.length)]);
   }, [language, safetyTips]);
-  
+
   // Управление фоновым звуком
   useEffect(() => {
     if (audioRef.current) {
       if (ambientSound !== 'none') {
-        // Принудительно перезагружаем аудио при смене звука
         audioRef.current.load();
-        // Устанавливаем громкость на средний уровень при включении
         audioRef.current.volume = 0.5;
-        // Обновляем состояние громкости
         setVolume(0.5);
-        // Воспроизводим звук
         audioRef.current.play().catch(e => console.log('Audio play failed:', e));
       } else {
         audioRef.current.pause();
@@ -320,25 +319,23 @@ function App() {
       audioRef.current.volume = volume;
     }
   }, [volume]);
-  
+
   // Функции управления
-  const handleStart = () => {
-    setIsRunning(!isRunning);
-  };
-  
+  const handleStart = () => setIsRunning(!isRunning);
+
   const handleReset = () => {
     setIsRunning(false);
     setMinutes(totalMinutes);
     setSeconds(0);
   };
-  
+
   const handlePreset = (presetMinutes) => {
     setTotalMinutes(presetMinutes);
     setMinutes(presetMinutes);
     setSeconds(0);
     setIsRunning(false);
   };
-  
+
   const handleDialChange = (newMinutes) => {
     if (!isRunning) {
       setTotalMinutes(newMinutes);
@@ -346,15 +343,7 @@ function App() {
       setSeconds(0);
     }
   };
-  
-  /*
-  const playChime = () => {
-    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmFgU7k9n1unEiBC13yO/eizEIHWq+8+OWT" +
-      "AkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAkOUqzn77ViFgU7k9n1unEiBC13yO/eizEIHWq+8+OWTAk=');
-    audio.volume = 0.3;
-    audio.play().catch(e => console.log('Chime play failed:', e));
-  };
-  */
+
   // Звук завершения таймера
   const playChime = () => {
     try {
@@ -365,52 +354,46 @@ function App() {
       console.log('End timer sound failed:', e);
     }
   };
-  
+
   const showNotification = () => {
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('Pomodoro завершен! 🎉', {
         body: 'Время сделать перерыв и размяться',
-        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2310b981"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/></svg>'
+        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f59e0b"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/></svg>'
       });
     }
   };
-  
+
   // Запрос разрешения на уведомления
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
   }, []);
-  
+
   // Расчет прогресса
   const totalSeconds = totalMinutes * 60;
   const remainingSeconds = minutes * 60 + seconds;
   const progress = ((totalSeconds - remainingSeconds) / totalSeconds) * 100;
-  
+
   // Функция для получения фонового изображения
   const getBackgroundImage = () => {
     switch (ambientSound) {
-      case 'forest':
-        return 'images/forest_1.webp';
-      case 'forest2':
-        return 'images/forest_2.webp';
-      case 'ocean':
-        return 'images/ocean.webp';
-      case 'construction':
-        return 'images/construction.webp';
-      default:
-        return null;
+      case 'forest': return 'images/forest_1.webp';
+      case 'forest2': return 'images/forest_2.webp';
+      case 'ocean': return 'images/ocean.webp';
+      case 'construction': return 'images/construction.webp';
+      default: return null;
     }
   };
-  
-  
+
   return (
-    <div 
+    <div
       className="min-h-screen p-2 md:p-4 lg:p-8 relative"
       style={{
-        backgroundImage: getBackgroundImage() 
-          ? `linear-gradient(rgba(102, 126, 234, 0.7), rgba(118, 75, 162, 0.7)), url(${getBackgroundImage()})`
-          : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        backgroundImage: getBackgroundImage()
+          ? `linear-gradient(rgba(10, 22, 40, 0.82), rgba(10, 18, 38, 0.85)), url(${getBackgroundImage()})`
+          : 'linear-gradient(135deg, #0a1628 0%, #0f2444 55%, #1a3565 100%)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -423,39 +406,37 @@ function App() {
         loop
         preload="none"
         src={
-          ambientSound === 'forest'
-            ? 'Forest.mp3'
-            : ambientSound === 'forest2'
-            ? 'Forest_2.mp3'
-            : ambientSound === 'ocean'
-            ? 'Ocean.mp3'
-            : ambientSound === 'construction'
-            ? 'construction_site.mp3'
-            : ''
+          ambientSound === 'forest' ? 'Forest.mp3'
+          : ambientSound === 'forest2' ? 'Forest_2.mp3'
+          : ambientSound === 'ocean' ? 'Ocean.mp3'
+          : ambientSound === 'construction' ? 'construction_site.mp3'
+          : ''
         }
       />
-      
+
       <div className="max-w-7xl mx-auto">
         {/* Заголовок */}
         <header className="text-center mb-4 md:mb-8 slide-in">
-          <div className="inline-flex items-center gap-2 md:gap-3 bg-white/20 backdrop-blur-lg rounded-full px-4 md:px-6 py-2 md:py-3 border border-white/30">
-            <a href="https://vk.com/club224447229" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
-              <img src="images/BP.png" alt="BP" className="w-10 h-10 md:w-14 md:h-14 object-contain" />
+          <div className="inline-flex items-center gap-2 md:gap-3 bg-white/8 backdrop-blur-lg rounded-full px-4 md:px-6 py-2 md:py-3 border border-amber-400/20"
+            style={{ background: 'rgba(255,255,255,0.07)' }}>
+            <a href="https://bestpracticeai.ru/" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+              <img src="images/BP.png" alt="Best Practice" className="w-10 h-10 md:w-14 md:h-14 object-contain rounded-full" />
             </a>
-            <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-white">Safety Pomodoro</h1>
+            <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-white tracking-tight">Safety Pomodoro</h1>
           </div>
-          <p className="text-white/80 mt-2 md:mt-3 text-sm md:text-lg">{t.subtitle}</p>
+          <p className="text-amber-400/80 mt-2 md:mt-3 text-sm md:text-base tracking-widest font-semibold uppercase">{t.subtitle}</p>
         </header>
-        
+
         {/* Переключатель языков */}
         <div className="flex justify-center mb-4 md:absolute md:top-4 md:right-4 md:mb-0 z-50">
-          <div className="flex gap-2 bg-white/20 backdrop-blur-lg rounded-full p-1 border border-white/30">
+          <div className="flex gap-2 backdrop-blur-lg rounded-full p-1 border border-white/15"
+            style={{ background: 'rgba(255,255,255,0.08)' }}>
             <button
               onClick={() => setLanguage('ru')}
               className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${
-                language === 'ru' 
-                  ? 'bg-white/30 text-white' 
-                  : 'text-white/70 hover:text-white hover:bg-white/10'
+                language === 'ru'
+                  ? 'bg-amber-500/30 text-white border border-amber-400/40'
+                  : 'text-white/60 hover:text-white hover:bg-white/10'
               }`}
             >
               <span className="text-lg">🇷🇺</span>
@@ -464,9 +445,9 @@ function App() {
             <button
               onClick={() => setLanguage('en')}
               className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all ${
-                language === 'en' 
-                  ? 'bg-white/30 text-white' 
-                  : 'text-white/70 hover:text-white hover:bg-white/10'
+                language === 'en'
+                  ? 'bg-amber-500/30 text-white border border-amber-400/40'
+                  : 'text-white/60 hover:text-white hover:bg-white/10'
               }`}
             >
               <span className="text-lg">🇺🇸</span>
@@ -474,304 +455,291 @@ function App() {
             </button>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Левая колонка - Таймер */}
           <div className="lg:col-span-2 space-y-6">
             {/* Основной блок таймера */}
             <FadeIn delay={100} duration={800}>
-              <div className="glass rounded-3xl p-8 shadow-2xl slide-in" style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(30px)',
-                WebkitBackdropFilter: 'blur(30px)',
-                border: '1px solid rgba(255, 255, 255, 0.15)'
-              }}>
-              <div className="hazard-stripe h-3 rounded-full mb-6"></div>
-              
-              {/* Дисплей таймера */}
-              <div className="text-center mb-8">
-                <div className="relative inline-block">
-                  <svg className="progress-ring" width="280" height="280">
-                    <defs>
-                      <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#10b981" />
-                        <stop offset="100%" stopColor="#3b82f6" />
-                      </linearGradient>
-                    </defs>
-                    <circle
-                      cx="140"
-                      cy="140"
-                      r="130"
-                      stroke="#e5e7eb"
-                      strokeWidth="12"
-                      fill="none"
-                    />
-                    <circle
-                      className="progress-ring__circle"
-                      cx="140"
-                      cy="140"
-                      r="130"
-                      stroke="url(#progress-gradient)"
-                      strokeWidth="12"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 130}`}
-                      strokeDashoffset={`${2 * Math.PI * 130 * (1 - progress / 100)}`}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <div className="text-6xl md:text-7xl font-bold text-gray-800 tabular-nums">
-                      {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-                    </div>
-                    <div className="text-gray-500 mt-2">
-                      {isRunning ? t.inWork : t.onPause}
+              <div className="glass rounded-3xl p-8 shadow-2xl slide-in" style={glassStyle}>
+                <div className="hazard-stripe h-3 rounded-full mb-6"></div>
+
+                {/* Дисплей таймера */}
+                <div className="text-center mb-8">
+                  <div className="relative inline-block">
+                    <svg className="progress-ring" width="280" height="280">
+                      <defs>
+                        <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#fbbf24" />
+                          <stop offset="100%" stopColor="#f59e0b" />
+                        </linearGradient>
+                      </defs>
+                      <circle
+                        cx="140" cy="140" r="130"
+                        stroke="rgba(255,255,255,0.1)"
+                        strokeWidth="12"
+                        fill="none"
+                      />
+                      <circle
+                        className="progress-ring__circle"
+                        cx="140" cy="140" r="130"
+                        stroke="url(#progress-gradient)"
+                        strokeWidth="12"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeDasharray={`${2 * Math.PI * 130}`}
+                        strokeDashoffset={`${2 * Math.PI * 130 * (1 - progress / 100)}`}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <div className="text-6xl md:text-7xl font-bold text-white tabular-nums"
+                        style={{ textShadow: '0 0 30px rgba(245,158,11,0.3)' }}>
+                        {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                      </div>
+                      <div className={`mt-2 text-sm font-semibold tracking-widest uppercase px-3 py-1 rounded-full ${
+                        isRunning
+                          ? 'text-amber-400 bg-amber-400/10 border border-amber-400/20'
+                          : 'text-white/50 bg-white/5 border border-white/10'
+                      }`}>
+                        {isRunning ? t.inWork : t.onPause}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              {/* Кнопки управления */}
-              <div className="flex justify-center gap-4 mb-6">
-                <GradientBorderButton
-                  onClick={handleStart}
-                  isActive={isRunning}
-                  className="transform hover:scale-105"
-                >
-                  <i className={`fas ${isRunning ? 'fa-pause' : 'fa-play'} mr-2`}></i>
-                  {isRunning ? t.pause : t.start}
-                </GradientBorderButton>
-                <RippleButton
-                  onClick={handleReset}
-                  className="px-8 py-4 rounded-2xl font-semibold text-lg neo-button transition-all transform hover:scale-105"
-                >
-                  <i className="fas fa-redo mr-2"></i>
-                  {t.reset}
-                </RippleButton>
-              </div>
-              
-              {/* Пресеты времени */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                {[20, 25, 30, 40].map(preset => (
-                  <RippleButton
-                    key={preset}
-                    onClick={() => handlePreset(preset)}
-                    className={`py-3 rounded-xl font-medium transition-all enhanced-button ${
-                      totalMinutes === preset 
-                        ? 'bg-blue-500 text-white shadow-md' 
-                        : 'bg-white/80 hover:bg-white text-gray-700 shadow'
-                    }`}
+
+                {/* Кнопки управления */}
+                <div className="flex justify-center gap-4 mb-6">
+                  <GradientBorderButton
+                    onClick={handleStart}
+                    isActive={isRunning}
+                    className="transform hover:scale-105"
                   >
-                    <i className="fas fa-clock mr-2"></i>
-                    {preset} {t.minutes}
+                    <i className={`fas ${isRunning ? 'fa-pause' : 'fa-play'} mr-2`}></i>
+                    {isRunning ? t.pause : t.start}
+                  </GradientBorderButton>
+                  <RippleButton
+                    onClick={handleReset}
+                    className="px-8 py-4 rounded-2xl font-semibold text-lg neo-button transition-all transform hover:scale-105"
+                  >
+                    <i className="fas fa-redo mr-2"></i>
+                    {t.reset}
                   </RippleButton>
-                ))}
-              </div>
-              
-              {/* Кастомный выбор времени */}
-              <div className="bg-gray-100 rounded-2xl p-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t.setTime}: {totalMinutes} {t.minutes}
-                </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="60"
-                  value={totalMinutes}
-                  onChange={(e) => handleDialChange(parseInt(e.target.value))}
-                  className="w-full h-3 bg-gray-300 rounded-lg appearance-none cursor-pointer"
-                  style={{
-                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(totalMinutes/60)*100}%, #e5e7eb ${(totalMinutes/60)*100}%, #e5e7eb 100%)`
-                  }}
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>1</span>
-                  <span>15</span>
-                  <span>30</span>
-                  <span>45</span>
-                  <span>60</span>
+                </div>
+
+                {/* Пресеты времени */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                  {[20, 25, 30, 40].map(preset => (
+                    <RippleButton
+                      key={preset}
+                      onClick={() => handlePreset(preset)}
+                      className={`py-3 rounded-xl font-medium transition-all enhanced-button ${
+                        totalMinutes === preset
+                          ? 'bg-amber-500 text-gray-900 shadow-md shadow-amber-500/30'
+                          : 'bg-white/10 hover:bg-white/20 text-white border border-white/15'
+                      }`}
+                    >
+                      <i className="fas fa-clock mr-2"></i>
+                      {preset} {t.minutes}
+                    </RippleButton>
+                  ))}
+                </div>
+
+                {/* Кастомный выбор времени */}
+                <div className="rounded-2xl p-4 border border-white/10"
+                  style={{ background: 'rgba(255,255,255,0.07)' }}>
+                  <label className="block text-sm font-medium text-white/70 mb-2">
+                    {t.setTime}: <span className="text-amber-400 font-bold">{totalMinutes}</span> {t.minutes}
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="60"
+                    value={totalMinutes}
+                    onChange={(e) => handleDialChange(parseInt(e.target.value))}
+                    className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${(totalMinutes/60)*100}%, rgba(255,255,255,0.15) ${(totalMinutes/60)*100}%, rgba(255,255,255,0.15) 100%)`
+                    }}
+                  />
+                  <div className="flex justify-between text-xs text-white/35 mt-1">
+                    <span>1</span><span>15</span><span>30</span><span>45</span><span>60</span>
+                  </div>
                 </div>
               </div>
-              </div>
             </FadeIn>
-            
+
             {/* Блок управления звуком */}
             <FadeIn delay={300} duration={800}>
-              <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(30px)',
-                WebkitBackdropFilter: 'blur(30px)',
-                border: '1px solid rgba(255, 255, 255, 0.15)'
-              }}>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                <i className="fas fa-music mr-2 text-purple-500"></i>
-                {t.backgroundSounds}
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-                <RippleButton
-                  onClick={() => setAmbientSound('none')}
-                  className={`py-3 px-4 rounded-xl transition-all enhanced-button ${
-                    ambientSound === 'none' 
-                      ? 'bg-gray-500 text-white' 
-                      : 'bg-white hover:bg-gray-50 text-gray-700 shadow'
-                  }`}
-                >
-                  <i className="fas fa-volume-mute mr-2"></i>
-                  {t.silence}
-                </RippleButton>
-                <RippleButton
-                  onClick={() => setAmbientSound('forest')}
-                  className={`py-3 px-4 rounded-xl transition-all enhanced-button ${
-                    ambientSound === 'forest' 
-                      ? 'bg-green-500 text-white' 
-                      : 'bg-white hover:bg-gray-50 text-gray-700 shadow'
-                  }`}
-                >
-                  <i className="fas fa-tree mr-2"></i>
-                  {t.forest}
-                </RippleButton>
-                <RippleButton
-                  onClick={() => setAmbientSound('forest2')}
-                  className={`py-3 px-4 rounded-xl transition-all enhanced-button ${
-                    ambientSound === 'forest2' 
-                      ? 'bg-green-600 text-white' 
-                      : 'bg-white hover:bg-gray-50 text-gray-700 shadow'
-                  }`}
-                >
-                  <i className="fas fa-leaf mr-2"></i>
-                  {t.forest2}
-                </RippleButton>
-                <RippleButton
-                  onClick={() => setAmbientSound('ocean')}
-                  className={`py-3 px-4 rounded-xl transition-all enhanced-button ${
-                    ambientSound === 'ocean' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-white hover:bg-gray-50 text-gray-700 shadow'
-                  }`}
-                >
-                  <i className="fas fa-water mr-2"></i>
-                  {t.ocean}
-                </RippleButton>
-                <RippleButton
-                  onClick={() => setAmbientSound('construction')}
-                  className={`py-3 px-4 rounded-xl transition-all enhanced-button ${
-                    ambientSound === 'construction' 
-                      ? 'bg-orange-500 text-white' 
-                      : 'bg-white hover:bg-gray-50 text-gray-700 shadow'
-                  }`}
-                >
-                  <i className="fas fa-hammer mr-2"></i>
-                  {t.construction}
-                </RippleButton>
-              </div>
-              <div className="flex items-center gap-3">
-                <i className="fas fa-volume-down text-gray-500"></i>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={volume}
-                  onChange={(e) => setVolume(parseFloat(e.target.value))}
-                  className="flex-1 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer"
-                />
-                <i className="fas fa-volume-up text-gray-500"></i>
-              </div>
+              <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={glassStyle}>
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  <i className="fas fa-music mr-2 text-amber-400"></i>
+                  {t.backgroundSounds}
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                  <RippleButton
+                    onClick={() => setAmbientSound('none')}
+                    className={`py-3 px-4 rounded-xl transition-all enhanced-button text-sm ${
+                      ambientSound === 'none'
+                        ? 'bg-slate-600 text-white border border-slate-400/30'
+                        : 'bg-white/10 hover:bg-white/20 text-white/80 border border-white/15'
+                    }`}
+                  >
+                    <i className="fas fa-volume-mute mr-2"></i>{t.silence}
+                  </RippleButton>
+                  <RippleButton
+                    onClick={() => setAmbientSound('forest')}
+                    className={`py-3 px-4 rounded-xl transition-all enhanced-button text-sm ${
+                      ambientSound === 'forest'
+                        ? 'bg-green-600 text-white border border-green-400/30'
+                        : 'bg-white/10 hover:bg-white/20 text-white/80 border border-white/15'
+                    }`}
+                  >
+                    <i className="fas fa-tree mr-2"></i>{t.forest}
+                  </RippleButton>
+                  <RippleButton
+                    onClick={() => setAmbientSound('forest2')}
+                    className={`py-3 px-4 rounded-xl transition-all enhanced-button text-sm ${
+                      ambientSound === 'forest2'
+                        ? 'bg-emerald-700 text-white border border-emerald-400/30'
+                        : 'bg-white/10 hover:bg-white/20 text-white/80 border border-white/15'
+                    }`}
+                  >
+                    <i className="fas fa-leaf mr-2"></i>{t.forest2}
+                  </RippleButton>
+                  <RippleButton
+                    onClick={() => setAmbientSound('ocean')}
+                    className={`py-3 px-4 rounded-xl transition-all enhanced-button text-sm ${
+                      ambientSound === 'ocean'
+                        ? 'bg-blue-600 text-white border border-blue-400/30'
+                        : 'bg-white/10 hover:bg-white/20 text-white/80 border border-white/15'
+                    }`}
+                  >
+                    <i className="fas fa-water mr-2"></i>{t.ocean}
+                  </RippleButton>
+                  <RippleButton
+                    onClick={() => setAmbientSound('construction')}
+                    className={`py-3 px-4 rounded-xl transition-all enhanced-button text-sm ${
+                      ambientSound === 'construction'
+                        ? 'bg-amber-500 text-gray-900 border border-amber-300/30'
+                        : 'bg-white/10 hover:bg-white/20 text-white/80 border border-white/15'
+                    }`}
+                  >
+                    <i className="fas fa-hammer mr-2"></i>{t.construction}
+                  </RippleButton>
+                </div>
+                <div className="flex items-center gap-3">
+                  <i className="fas fa-volume-down text-white/30 text-sm"></i>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={volume}
+                    onChange={(e) => setVolume(parseFloat(e.target.value))}
+                    className="flex-1 h-2 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${volume*100}%, rgba(255,255,255,0.15) ${volume*100}%, rgba(255,255,255,0.15) 100%)`
+                    }}
+                  />
+                  <i className="fas fa-volume-up text-white/30 text-sm"></i>
+                </div>
               </div>
             </FadeIn>
           </div>
-          
+
           {/* Правая колонка - Советы и статистика */}
           <div className="space-y-6">
             {/* Совет по безопасности */}
             <FadeIn delay={500} duration={800}>
-              <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(30px)',
-                WebkitBackdropFilter: 'blur(30px)',
-                border: '1px solid rgba(255, 255, 255, 0.15)'
-              }}>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center safety-pulse">
-                  <i className="fas fa-exclamation-triangle text-gray-800"></i>
+              <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={glassStyle}>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center safety-pulse flex-shrink-0"
+                    style={{ boxShadow: '0 0 12px rgba(245,158,11,0.5)' }}>
+                    <i className="fas fa-exclamation-triangle text-gray-900"></i>
+                  </div>
+                  <h3 className="text-lg font-semibold text-white">{t.safetyTip}</h3>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800">{t.safetyTip}</h3>
-              </div>
-              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 border-l-4 border-yellow-400">
-                <p className="text-gray-700 leading-relaxed">{currentTip}</p>
-              </div>
-              <button
-                onClick={() => setCurrentTip(safetyTips[Math.floor(Math.random() * safetyTips.length)])}
-                className="mt-4 w-full py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-medium rounded-xl transition-all"
-              >
-                <i className="fas fa-sync-alt mr-2"></i>
-                {t.newTip}
-              </button>
+                <div className="rounded-xl p-4 border-l-4 border-amber-500/70"
+                  style={{ background: 'rgba(245,158,11,0.08)' }}>
+                  <p className="text-white/85 leading-relaxed text-sm">{currentTip}</p>
+                </div>
+                <button
+                  onClick={() => setCurrentTip(safetyTips[Math.floor(Math.random() * safetyTips.length)])}
+                  className="mt-4 w-full py-2 bg-amber-500 hover:bg-amber-400 text-gray-900 font-semibold rounded-xl transition-all"
+                  style={{ boxShadow: '0 4px 12px rgba(245,158,11,0.3)' }}
+                >
+                  <i className="fas fa-sync-alt mr-2"></i>
+                  {t.newTip}
+                </button>
               </div>
             </FadeIn>
-            
+
             {/* Статистика */}
             <FadeIn delay={700} duration={800}>
-              <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(30px)',
-                WebkitBackdropFilter: 'blur(30px)',
-                border: '1px solid rgba(255, 255, 255, 0.15)'
-              }}>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                <i className="fas fa-chart-line mr-2 text-blue-500"></i>
-                {t.dailyStats}
-              </h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
-                  <span className="text-gray-600">
-                    <i className="fas fa-fire mr-2 text-orange-500"></i>
-                    {t.series}
-                  </span>
-                  <span className="text-2xl font-bold text-blue-600">{streak}</span>
+              <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={glassStyle}>
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  <i className="fas fa-chart-line mr-2 text-amber-400"></i>
+                  {t.dailyStats}
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 rounded-xl border border-amber-800/25"
+                    style={{ background: 'rgba(245,158,11,0.08)' }}>
+                    <span className="text-white/65 text-sm">
+                      <i className="fas fa-fire mr-2 text-amber-400"></i>{t.series}
+                    </span>
+                    <span className="text-xl font-bold text-amber-400">{streak}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-xl border border-green-800/25"
+                    style={{ background: 'rgba(34,197,94,0.07)' }}>
+                    <span className="text-white/65 text-sm">
+                      <i className="fas fa-check-circle mr-2 text-green-400"></i>{t.sessions}
+                    </span>
+                    <span className="text-xl font-bold text-green-400">{sessionCount}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-xl border border-blue-800/25"
+                    style={{ background: 'rgba(59,130,246,0.07)' }}>
+                    <span className="text-white/65 text-sm">
+                      <i className="fas fa-clock mr-2 text-blue-400"></i>{t.minutesCount}
+                    </span>
+                    <span className="text-xl font-bold text-blue-400">{todayMinutes}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-xl border border-purple-800/25"
+                    style={{ background: 'rgba(139,92,246,0.07)' }}>
+                    <span className="text-white/65 text-sm">
+                      <i className="fas fa-check-double mr-2 text-purple-400"></i>{t.tasks}
+                    </span>
+                    <span className="text-xl font-bold text-purple-400">{completedTasks}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-green-50 rounded-xl">
-                  <span className="text-gray-600">
-                    <i className="fas fa-check-circle mr-2 text-green-500"></i>
-                    {t.sessions}
-                  </span>
-                  <span className="text-2xl font-bold text-green-600">{sessionCount}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
-                  <span className="text-gray-600">
-                    <i className="fas fa-clock mr-2 text-purple-500"></i>
-                    {t.minutesCount}
-                  </span>
-                  <span className="text-2xl font-bold text-purple-600">{todayMinutes}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-xl">
-                  <span className="text-gray-600">
-                    <i className="fas fa-check-double mr-2 text-yellow-500"></i>
-                    {t.tasks}
-                  </span>
-                  <span className="text-2xl font-bold text-yellow-600">{completedTasks}</span>
-                </div>
-              </div>
               </div>
             </FadeIn>
-            
+
             {/* Задачи на день */}
             <FadeIn delay={900} duration={800}>
-              <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(30px)',
-                WebkitBackdropFilter: 'blur(30px)',
-                border: '1px solid rgba(255, 255, 255, 0.15)'
-              }}>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                <i className="fas fa-sticky-note mr-2 text-indigo-500"></i>
-                {t.dailyTasks}
-              </h3>
-              <QuickNotes onTaskToggle={(completedCount) => setCompletedTasks(completedCount)} translations={t} />
+              <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={glassStyle}>
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  <i className="fas fa-sticky-note mr-2 text-indigo-400"></i>
+                  {t.dailyTasks}
+                </h3>
+                <QuickNotes onTaskToggle={(completedCount) => setCompletedTasks(completedCount)} translations={t} />
               </div>
             </FadeIn>
-            
           </div>
         </div>
+
+        {/* Footer */}
+        <footer className="text-center mt-8 pb-2">
+          <a
+            href="https://bestpracticeai.ru/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-white/35 hover:text-white/60 transition-colors text-xs tracking-wide group"
+          >
+            <img src="images/BP.png" alt="Best Practice" className="w-5 h-5 rounded-full opacity-50 group-hover:opacity-80 transition-opacity" />
+            <span>{t.madeAt}</span>
+            <span className="text-amber-400/60 group-hover:text-amber-400 transition-colors font-medium">bestpracticeai.ru</span>
+          </a>
+        </footer>
       </div>
     </div>
   );
@@ -784,31 +752,30 @@ function QuickNotes({ onTaskToggle, translations }) {
     return saved ? JSON.parse(saved) : [];
   });
   const [newNote, setNewNote] = useState('');
-  
+
   useEffect(() => {
     localStorage.setItem('pomodoroNotes', JSON.stringify(notes));
-    // Подсчитываем завершенные задачи и передаем в родительский компонент
     const completedCount = notes.filter(note => note.completed).length;
     onTaskToggle(completedCount);
   }, [notes, onTaskToggle]);
-  
+
   const addNote = () => {
     if (newNote.trim()) {
       setNotes([...notes, { id: Date.now(), text: newNote, completed: false }]);
       setNewNote('');
     }
   };
-  
+
   const toggleNote = (id) => {
-    setNotes(notes.map(note => 
+    setNotes(notes.map(note =>
       note.id === id ? { ...note, completed: !note.completed } : note
     ));
   };
-  
+
   const deleteNote = (id) => {
     setNotes(notes.filter(note => note.id !== id));
   };
-  
+
   return (
     <div>
       <div className="flex gap-2 mb-3">
@@ -818,30 +785,33 @@ function QuickNotes({ onTaskToggle, translations }) {
           onChange={(e) => setNewNote(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addNote()}
           placeholder={translations.addTask}
-          className="flex-1 px-3 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-3 py-2 rounded-xl border border-white/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 placeholder-white"
+          style={{ background: 'rgba(255,255,255,0.08)', '--placeholder-color': 'rgba(255,255,255,0.35)' }}
         />
         <button
           onClick={addNote}
-          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-all"
+          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-gray-900 rounded-xl transition-all font-semibold"
+          style={{ boxShadow: '0 2px 8px rgba(245,158,11,0.3)' }}
         >
           <i className="fas fa-plus"></i>
         </button>
       </div>
-      <div className="space-y-2 max-h-48 overflow-y-auto">
+      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
         {notes.map(note => (
-          <div key={note.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+          <div key={note.id} className="flex items-center gap-2 p-2 rounded-lg border border-white/10"
+            style={{ background: 'rgba(255,255,255,0.06)' }}>
             <input
               type="checkbox"
               checked={note.completed}
               onChange={() => toggleNote(note.id)}
-              className="w-4 h-4 text-blue-600"
+              className="w-4 h-4 cursor-pointer accent-amber-500 flex-shrink-0"
             />
-            <span className={`flex-1 text-sm ${note.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+            <span className={`flex-1 text-sm ${note.completed ? 'line-through text-white/30' : 'text-white/80'}`}>
               {note.text}
             </span>
             <button
               onClick={() => deleteNote(note.id)}
-              className="text-red-500 hover:text-red-700 text-sm"
+              className="text-red-400/60 hover:text-red-400 text-sm transition-colors flex-shrink-0"
             >
               <i className="fas fa-trash"></i>
             </button>
