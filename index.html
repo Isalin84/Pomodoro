@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Safety Pomodoro — Таймер для профессионалов охраны труда</title>
   <meta name="description" content="Профессиональный Pomodoro-таймер с советами по безопасности для специалистов по охране труда">
-  
+
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-490420702"></script>
   <script>
@@ -14,260 +14,273 @@
     gtag('js', new Date());
     gtag('config', 'G-490420702');
   </script>
-  
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
+
   <!-- React & ReactDOM -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  
+
   <!-- Babel Standalone для JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  
-  <!-- Font Awesome для иконок -->
+
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
-  <!-- Google Fonts -->
+
+  <!-- Google Fonts: Montserrat + Lora + Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
+    /* ===== BRAND VARIABLES ===== */
+    :root {
+      --brand-dark:       #0B1D3A;
+      --brand-steel:      #1E3A5F;
+      --brand-light-steel:#2A4F7A;
+      --brand-gold:       #D4AF37;
+      --brand-gold-hover: #C4A032;
+      --brand-soft-gold:  #E8D48B;
+      --brand-beige:      #F5DEB3;
+      --font-heading: 'Montserrat', system-ui, sans-serif;
+      --font-body:    'Inter', system-ui, sans-serif;
+      --font-accent:  'Lora', Georgia, serif;
+    }
+
     body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, #0a1628 0%, #0f2444 100%);
+      font-family: var(--font-body);
+      background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-steel) 60%, var(--brand-dark) 100%);
       min-height: 100vh;
     }
-    
-    /* Анимации */
+
+    /* ===== ANIMATIONS ===== */
     @keyframes pulse-safety {
-      0%, 100% {
-        transform: scale(1);
-        opacity: 1;
-      }
-      50% {
-        transform: scale(1.05);
-        opacity: 0.9;
-      }
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%       { transform: scale(1.05); opacity: 0.9; }
     }
-    
+
     @keyframes slide-in {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    .safety-pulse {
-      animation: pulse-safety 2s ease-in-out infinite;
-    }
-    
-    .slide-in {
-      animation: slide-in 0.5s ease-out;
-    }
-    
-    /* Стили для прогресс-кольца */
-    .progress-ring {
-      transform: rotate(-90deg);
-    }
-    
-    .progress-ring__circle {
-      transition: stroke-dashoffset 0.35s;
-      transform-origin: 50% 50%;
-    }
-    
-    /* Стиль для диска времени */
-    .time-dial {
-      background: conic-gradient(
-        from 0deg,
-        #f59e0b 0deg,
-        #f59e0b var(--dial-angle),
-        rgba(255,255,255,0.1) var(--dial-angle),
-        rgba(255,255,255,0.1) 360deg
-      );
-    }
-    
-    /* Стиль для предупреждающей ленты */
-    .hazard-stripe {
-      background: repeating-linear-gradient(
-        45deg,
-        #fbbf24,
-        #fbbf24 10px,
-        #111827 10px,
-        #111827 20px
-      );
-    }
-    
-    /* Glassmorphism эффект */
-    .glass {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(30px);
-      -webkit-backdrop-filter: blur(30px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Неоморфизм для кнопок - тёмная тема */
-    .neo-button {
-      background: rgba(255, 255, 255, 0.10);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      box-shadow: 4px 4px 12px rgba(0,0,0,0.35), -2px -2px 8px rgba(255,255,255,0.05);
-      color: white;
-      transition: all 0.3s ease;
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    .neo-button:hover {
-      background: rgba(255, 255, 255, 0.15);
-      box-shadow: 2px 2px 6px rgba(0,0,0,0.4), -1px -1px 4px rgba(255,255,255,0.07);
-    }
-
-    .neo-button:active {
-      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.4), inset -1px -1px 4px rgba(255,255,255,0.05);
-    }
-    
-    /* Кастомный скроллбар */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: rgba(255,255,255,0.05);
-      border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: rgba(245,158,11,0.4);
-      border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(245,158,11,0.7);
-    }
-
-    /* Range input thumb */
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
-      background: #f59e0b;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid rgba(255,255,255,0.3);
-      box-shadow: 0 0 6px rgba(245,158,11,0.6);
-    }
-
-    input[type=range]::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      background: #f59e0b;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid rgba(255,255,255,0.3);
-    }
-
-    /* Placeholder color for task input */
-    input::placeholder {
-      color: rgba(255, 255, 255, 0.35);
-    }
-
-    /* Subtle glow on active timer */
-    @keyframes amber-glow {
-      0%, 100% { box-shadow: 0 0 20px rgba(245,158,11,0.15), 0 8px 32px rgba(0,0,0,0.3); }
-      50% { box-shadow: 0 0 35px rgba(245,158,11,0.25), 0 8px 32px rgba(0,0,0,0.3); }
-    }
-    
-    /* Ripple Effect Animation */
     @keyframes ripple-effect {
-      0% {
-        transform: scale(1);
-        opacity: 1;
-      }
-      50% {
-        transform: scale(10);
-        opacity: 0.3;
-      }
-      100% {
-        transform: scale(35);
-        opacity: 0;
-      }
+      0%   { transform: scale(1);  opacity: 1; }
+      50%  { transform: scale(10); opacity: 0.3; }
+      100% { transform: scale(35); opacity: 0; }
     }
-    
-    /* Gradient Border Animation */
-    @property --animate-duration {
+
+    @keyframes pulse-ring {
+      0%   { transform: scale(0.90); opacity: 0.7; }
+      70%  { transform: scale(1.10); opacity: 0; }
+      100% { transform: scale(1.10); opacity: 0; }
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position:  200% center; }
+    }
+
+    @keyframes float-up {
+      0%   { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(212,175,55,0.2); }
+      50%       { box-shadow: 0 0 40px rgba(212,175,55,0.45); }
+    }
+
+    /* Gradient Border Rotation */
+    @property --grad-angle {
       syntax: '<angle>';
       initial-value: 0deg;
       inherits: false;
     }
-    
     @keyframes rotate-gradient {
-      0% {
-        --animate-duration: 0deg;
-      }
-      100% {
-        --animate-duration: 360deg;
-      }
+      0%   { --grad-angle: 0deg; }
+      100% { --grad-angle: 360deg; }
     }
-    
+
+    /* ===== UTILITY CLASSES ===== */
+    .safety-pulse { animation: pulse-safety 2s ease-in-out infinite; }
+    .slide-in     { animation: slide-in 0.5s ease-out; }
+    .float-up     { animation: float-up 0.4s ease-out; }
+    .glow-pulse   { animation: glow-pulse 2s ease-in-out infinite; }
+
+    .font-heading { font-family: var(--font-heading); }
+    .font-accent  { font-family: var(--font-accent); }
+
+    /* ===== PROGRESS RING ===== */
+    .progress-ring { transform: rotate(-90deg); }
+    .progress-ring__circle {
+      transition: stroke-dashoffset 0.35s;
+      transform-origin: 50% 50%;
+    }
+
+    /* ===== HAZARD STRIPE ===== */
+    .hazard-stripe {
+      background: repeating-linear-gradient(
+        45deg,
+        var(--brand-gold),
+        var(--brand-gold) 10px,
+        #111827 10px,
+        #111827 20px
+      );
+    }
+
+    /* ===== GLASS CARDS ===== */
+    .glass {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+    }
+
+    .glass-gold {
+      background: rgba(212,175,55,0.06);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border: 1px solid rgba(212,175,55,0.20);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+    }
+
+    /* ===== NEO BUTTON (Сброс) ===== */
+    .neo-button {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 4px 4px 12px rgba(0,0,0,0.35), -2px -2px 8px rgba(255,255,255,0.04);
+      color: white;
+      transition: all 0.3s ease;
+      font-family: var(--font-heading);
+    }
+    .neo-button:hover {
+      background: rgba(255,255,255,0.13);
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.4), -1px -1px 4px rgba(255,255,255,0.06);
+    }
+    .neo-button:active {
+      box-shadow: inset 2px 2px 6px rgba(0,0,0,0.4), inset -1px -1px 4px rgba(255,255,255,0.04);
+    }
+
+    /* ===== GRADIENT BORDER BUTTON ===== */
     .gradient-border-btn:after,
     .gradient-border-btn:before {
       content: '';
       display: block;
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       border-radius: 16px;
       background-image: conic-gradient(
-        from var(--animate-duration) at 50% 50%,
-        #fbbf24 0%,
-        #f59e0b 25%,
-        #ffffff 50%,
-        #d97706 75%,
-        #fbbf24 100%
+        from var(--grad-angle) at 50% 50%,
+        var(--brand-gold)       0%,
+        var(--brand-soft-gold) 25%,
+        #ffffff                50%,
+        var(--brand-gold-hover)75%,
+        var(--brand-gold)      100%
       );
       animation: rotate-gradient 3s infinite linear;
       z-index: -1;
     }
-    
     .gradient-border-btn:before {
-      filter: blur(8px);
-      opacity: 0.7;
+      filter: blur(10px);
+      opacity: 0.65;
     }
-    
-    /* Enhanced hover effects */
+
+    /* ===== ENHANCED BUTTON SWEEP ===== */
     .enhanced-button {
       position: relative;
       overflow: hidden;
       transition: all 0.3s ease;
     }
-    
     .enhanced-button::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
       transition: left 0.5s;
     }
-    
-    .enhanced-button:hover::before {
-      left: 100%;
+    .enhanced-button:hover::before { left: 100%; }
+
+    /* ===== SHIMMER TEXT ===== */
+    .shimmer-gold {
+      background: linear-gradient(90deg, var(--brand-gold), var(--brand-soft-gold), var(--brand-gold));
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s linear infinite;
+    }
+
+    /* ===== RANGE SLIDER ===== */
+    input[type=range] { -webkit-appearance: none; }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-hover));
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid rgba(255,255,255,0.3);
+      box-shadow: 0 0 8px rgba(212,175,55,0.7);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 16px; height: 16px;
+      background: var(--brand-gold);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    input::placeholder { color: rgba(255,255,255,0.35); }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.35); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(212,175,55,0.65); }
+
+    /* ===== SESSION DOTS ===== */
+    .session-dot {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .session-dot.done {
+      background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-hover));
+      box-shadow: 0 0 10px rgba(212,175,55,0.7);
+    }
+    .session-dot.empty {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    /* ===== TIMER ACTIVE GLOW ===== */
+    .timer-running .progress-ring__circle {
+      filter: drop-shadow(0 0 6px rgba(212,175,55,0.8));
+    }
+
+    /* ===== TOAST ===== */
+    .toast-enter {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    .toast-exit {
+      transform: translateX(-50%) translateY(80px);
+      opacity: 0;
+    }
+
+    /* ===== BRAND DIVIDER ===== */
+    .brand-divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(212,175,55,0.35), transparent);
+      margin: 0.75rem 0;
     }
   </style>
 </head>
 <body>
   <div id="root"></div>
-  
-  <!-- Основное React приложение (cache-busting for GH Pages) -->
-  <script type="text/babel" data-presets="env,react" src="app.jsx?v=11"></script>
+  <script type="text/babel" data-presets="env,react" src="app.jsx?v=12"></script>
 </body>
 </html>
