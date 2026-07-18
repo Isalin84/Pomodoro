@@ -837,7 +837,7 @@ function App() {
   /* ── Notifications ── */
   const showBrowserNotification = msg => {
     if (notificationsEnabled && 'Notification' in window && Notification.permission === 'granted') {
-      new Notification(msg, { icon: 'images/BP.png' });
+      new Notification(msg, { icon: 'images/LogoBP_YellowCircle.png' });
     }
   };
 
@@ -982,7 +982,7 @@ function App() {
             style={{ ...glassStyle, border: `1px solid ${seasonTheme.accent}55` }}
           >
             <a href="https://bestpracticeai.ru/" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity flex-shrink-0">
-              <img src="images/BP.png" alt="Best Practice" className="w-10 h-10 md:w-14 md:h-14 object-contain rounded-full" />
+              <img src="images/LogoBP_YellowCircle.png" alt="Best Practice" className="w-12 h-12 md:w-16 md:h-16 object-contain rounded-full" />
             </a>
             <div className="text-left">
               <h1
@@ -1401,7 +1401,7 @@ function App() {
             className="inline-flex items-center gap-2 mt-3 group transition-all"
             style={{ color: 'rgba(255,255,255,0.30)' }}
           >
-            <img src="images/BP.png" alt="BP" className="w-5 h-5 rounded-full opacity-40 group-hover:opacity-70 transition-opacity" />
+            <img src="images/LogoBP_YellowCircle.png" alt="Best Practice" className="w-6 h-6 rounded-full opacity-60 group-hover:opacity-90 transition-opacity" />
             <span className="text-xs" style={{ fontFamily: 'Montserrat, sans-serif' }}>{t.madeAt}</span>
             <span
               className="text-xs font-semibold transition-colors group-hover:opacity-100"
