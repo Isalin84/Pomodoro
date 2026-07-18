@@ -4,6 +4,10 @@
   "description": "Professional Pomodoro timer for safety professionals with ambient sounds and safety tips",
   "main": "index.html",
   "scripts": {
+    "build": "npm run build:js && npm run build:css",
+    "build:js": "babel app.jsx --out-file app.js --compact=true",
+    "build:css": "tailwindcss -i tailwind.input.css -o styles.css --minify",
+    "check": "node scripts/check-build.mjs",
     "start": "python3 -m http.server 8000",
     "serve": "npx http-server -p 8000",
     "deploy": "echo 'Push to GitHub and enable GitHub Pages from Settings'"
@@ -24,6 +28,11 @@
     "url": "git+https://github.com/ivansalin/Pomodoro.git"
   },
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "@babel/cli": "^7.28.3",
+    "@babel/core": "^7.28.4",
+    "@babel/preset-env": "^7.28.3",
+    "@babel/preset-react": "^7.27.1",
+    "http-server": "^14.1.1",
+    "tailwindcss": "3.4.17"
   }
 }

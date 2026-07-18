@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Safety Pomodoro — Таймер для профессионалов охраны труда</title>
   <meta name="description" content="Профессиональный Pomodoro-таймер с советами по безопасности для специалистов по охране труда">
+  <meta name="theme-color" content="#0B1D3A">
+  <link rel="icon" type="image/png" href="images/BP.png">
 
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-490420702"></script>
@@ -15,16 +17,9 @@
     gtag('config', 'G-490420702');
   </script>
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
   <!-- React & ReactDOM -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
-  <!-- Babel 7 keeps the classic JSX runtime used by the React UMD build below.
-       Do not use an unpinned @babel/standalone URL: Babel 8 emits ESM imports. -->
-  <script src="https://unpkg.com/@babel/standalone@7.28.5/babel.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -33,6 +28,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=13">
 
   <style>
     /* ===== BRAND VARIABLES ===== */
@@ -53,6 +49,16 @@
       font-family: var(--font-body);
       background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-steel) 60%, var(--brand-dark) 100%);
       min-height: 100vh;
+    }
+
+    button,
+    input {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--season-soft, var(--brand-soft-gold));
+      outline-offset: 3px;
     }
 
     /* ===== ANIMATIONS ===== */
@@ -278,10 +284,21 @@
       background: linear-gradient(to right, transparent, rgba(212,175,55,0.35), transparent);
       margin: 0.75rem 0;
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel" data-presets="env,react" src="app.jsx?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>

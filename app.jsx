@@ -1,61 +1,69 @@
 const { useState, useEffect, useRef, useMemo, useCallback } = React;
 
-/* ─────────────────────────────────────────
-   MINI CALENDAR
-───────────────────────────────────────── */
-const MiniCalendar = ({ language }) => {
-  const [currentDate] = useState(new Date());
-  const today = currentDate.getDate();
-  const month = currentDate.getMonth();
-  const year  = currentDate.getFullYear();
-
-  const firstDay   = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const monthNames = {
-    ru: ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
-    en: ['January','February','March','April','May','June','July','August','September','October','November','December'],
-  };
-  const dayNames = {
-    ru: ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'],
-    en: ['Su','Mo','Tu','We','Th','Fr','Sa'],
-  };
-
-  const cells = [];
-  for (let i = 0; i < firstDay; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-
-  return (
-    <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-      <div className="text-center mb-3">
-        <span className="text-sm font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-          {monthNames[language][month]} {year}
-        </span>
-      </div>
-      <div className="grid grid-cols-7 gap-1 mb-1">
-        {dayNames[language].map(d => (
-          <div key={d} className="h-6 flex items-center justify-center text-xs font-semibold" style={{ color: 'rgba(212,175,55,0.55)', fontFamily: 'Montserrat, sans-serif' }}>
-            {d}
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-1">
-        {cells.map((day, i) => (
-          <div
-            key={i}
-            className="h-7 flex items-center justify-center text-xs rounded-lg transition-all"
-            style={day === today
-              ? { background: `linear-gradient(135deg, #D4AF37, #C4A032)`, color: '#0B1D3A', fontWeight: 700, fontFamily: 'Montserrat, sans-serif', boxShadow: '0 0 8px rgba(212,175,55,0.5)' }
-              : { color: day ? 'rgba(255,255,255,0.60)' : 'transparent' }
-            }
-          >
-            {day || ''}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+const STORAGE_KEYS = {
+  preferences: 'safetyPomodoroPreferencesV2',
+  stats: 'safetyPomodoroStatsV2',
+  notes: 'pomodoroNotes',
 };
+
+const readStored = (key, fallback) => {
+  try {
+    const value = JSON.parse(localStorage.getItem(key));
+    return value && typeof value === 'object' ? value : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const dateKey = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
+const getAutomaticSeason = () => {
+  const month = new Date().getMonth();
+  if (month === 11 || month <= 1) return 'winter';
+  if (month <= 4) return 'spring';
+  if (month <= 7) return 'summer';
+  return 'autumn';
+};
+
+const SEASON_THEMES = {
+  summer: {
+    icon: '☀️',
+    image: 'images/season-summer.webp',
+    accent: '#9BCB78',
+    soft: '#D9E8A8',
+    overlay: 'rgba(7, 28, 42, 0.78)',
+    overlayDeep: 'rgba(5, 20, 36, 0.92)',
+  },
+  autumn: {
+    icon: '🍂',
+    image: 'images/season-autumn.webp',
+    accent: '#D4AF37',
+    soft: '#E8C985',
+    overlay: 'rgba(28, 24, 32, 0.78)',
+    overlayDeep: 'rgba(11, 24, 45, 0.93)',
+  },
+  winter: {
+    icon: '❄️',
+    image: 'images/season-winter.webp',
+    accent: '#9FD8F2',
+    soft: '#D9F2FF',
+    overlay: 'rgba(8, 30, 56, 0.72)',
+    overlayDeep: 'rgba(4, 19, 40, 0.91)',
+  },
+  spring: {
+    icon: '🌱',
+    image: 'images/season-spring.webp',
+    accent: '#A9D6A2',
+    soft: '#E2C4DA',
+    overlay: 'rgba(7, 35, 43, 0.76)',
+    overlayDeep: 'rgba(5, 23, 39, 0.92)',
+  },
+};
+
+const PROCEDURAL_SOUNDS = new Set(['brown', 'rain', 'zen']);
 
 /* ─────────────────────────────────────────
    BRAND CONSTANTS
@@ -174,11 +182,15 @@ const GradientBorderButton = ({ children, onClick, isActive = false, className =
    FADE IN WRAPPER
 ───────────────────────────────────────── */
 const FadeIn = ({ children, delay = 0, duration = 600, className = '' }) => {
-  const [visible, setVisible] = useState(false);
+  const reduceMotion = typeof window !== 'undefined'
+    && window.matchMedia
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const [visible, setVisible] = useState(reduceMotion);
   useEffect(() => {
+    if (reduceMotion) return undefined;
     const t = setTimeout(() => setVisible(true), delay);
     return () => clearTimeout(t);
-  }, [delay]);
+  }, [delay, reduceMotion]);
   return (
     <div
       className={`transition-all ease-out ${className}`}
@@ -276,6 +288,9 @@ const Toast = ({ message, isVisible, onClose }) => {
   return (
     <div
       className="fixed bottom-6 left-1/2 z-50"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
       style={{
         transform: `translateX(-50%) translateY(${isVisible ? '0' : '80px'})`,
         opacity: isVisible ? 1 : 0,
@@ -285,7 +300,6 @@ const Toast = ({ message, isVisible, onClose }) => {
     >
       <div
         className="flex items-center gap-3 px-6 py-4 rounded-2xl cursor-pointer"
-        onClick={onClose}
         style={{
           background: `linear-gradient(135deg, ${BRAND.dark}, ${BRAND.steel})`,
           border: `1px solid rgba(212,175,55,0.40)`,
@@ -301,7 +315,14 @@ const Toast = ({ message, isVisible, onClose }) => {
         <span className="text-white font-semibold whitespace-nowrap" style={{ fontFamily: 'Montserrat, sans-serif' }}>
           {message}
         </span>
-        <i className="fas fa-times text-white/30 ml-2 text-xs hover:text-white/60 transition-colors"></i>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close notification"
+          className="ml-2 rounded p-1 text-white/50 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        >
+          <i className="fas fa-times text-xs" aria-hidden="true"></i>
+        </button>
       </div>
     </div>
   );
@@ -335,17 +356,21 @@ const StatCard = ({ icon, iconColor, label, value, bg, border }) => (
 /* ─────────────────────────────────────────
    QUICK NOTES
 ───────────────────────────────────────── */
-function QuickNotes({ onTaskToggle, translations }) {
+function QuickNotes({ onTaskToggle, translations, clearSignal }) {
   const [notes, setNotes] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('pomodoroNotes') || '[]'); }
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.notes) || '[]'); }
     catch { return []; }
   });
   const [newNote, setNewNote] = useState('');
 
   useEffect(() => {
-    localStorage.setItem('pomodoroNotes', JSON.stringify(notes));
+    localStorage.setItem(STORAGE_KEYS.notes, JSON.stringify(notes));
     onTaskToggle(notes.filter(n => n.completed).length);
   }, [notes, onTaskToggle]);
+
+  useEffect(() => {
+    if (clearSignal > 0) setNotes([]);
+  }, [clearSignal]);
 
   const addNote = () => {
     if (newNote.trim()) {
@@ -375,7 +400,9 @@ function QuickNotes({ onTaskToggle, translations }) {
           onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.18)'}
         />
         <button
+          type="button"
           onClick={addNote}
+          aria-label={translations.addTaskAction}
           className="px-4 py-2 rounded-xl font-bold transition-all hover:opacity-90 active:scale-95"
           style={{ background: `linear-gradient(135deg, ${BRAND.gold}, ${BRAND.goldHover})`, color: BRAND.dark, boxShadow: `0 2px 10px rgba(212,175,55,0.35)` }}
         >
@@ -393,14 +420,20 @@ function QuickNotes({ onTaskToggle, translations }) {
               type="checkbox"
               checked={note.completed}
               onChange={() => toggleNote(note.id)}
+              aria-label={`${translations.markTask}: ${note.text}`}
               className="w-4 h-4 cursor-pointer flex-shrink-0"
               style={{ accentColor: BRAND.gold }}
             />
             <span className={`flex-1 text-sm transition-all ${note.completed ? 'line-through text-white/30' : 'text-white/80'}`}>
               {note.text}
             </span>
-            <button onClick={() => deleteNote(note.id)} className="text-red-400/50 hover:text-red-400 text-xs transition-colors flex-shrink-0">
-              <i className="fas fa-trash"></i>
+            <button
+              type="button"
+              onClick={() => deleteNote(note.id)}
+              aria-label={`${translations.deleteTask}: ${note.text}`}
+              className="rounded p-2 text-red-300/70 transition-colors hover:text-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200/70"
+            >
+              <i className="fas fa-trash" aria-hidden="true"></i>
             </button>
           </div>
         ))}
@@ -418,19 +451,55 @@ function QuickNotes({ onTaskToggle, translations }) {
    MAIN APP
 ───────────────────────────────────────── */
 function App() {
-  const [minutes,       setMinutes]      = useState(25);
+  const savedPreferences = useMemo(() => readStored(STORAGE_KEYS.preferences, {}), []);
+  const savedStats = useMemo(() => {
+    const stored = readStored(STORAGE_KEYS.stats, {});
+    if (stored.date === dateKey()) return stored;
+    return {
+      ...stored,
+      date: dateKey(),
+      sessionCount: 0,
+      todayMinutes: 0,
+      meditationSessions: 0,
+      meditationMinutes: 0,
+    };
+  }, []);
+
+  const initialMode = savedPreferences.mode === 'meditation' ? 'meditation' : 'focus';
+  const initialFocusDuration = Number(savedPreferences.focusDuration) || 25;
+  const initialMeditationDuration = Number(savedPreferences.meditationDuration) || 10;
+  const initialDuration = initialMode === 'meditation' ? initialMeditationDuration : initialFocusDuration;
+
+  const [mode,          setMode]         = useState(initialMode);
+  const [focusDuration, setFocusDuration]= useState(initialFocusDuration);
+  const [meditationDuration, setMeditationDuration] = useState(initialMeditationDuration);
+  const [minutes,       setMinutes]      = useState(initialDuration);
   const [seconds,       setSeconds]      = useState(0);
-  const [totalMinutes,  setTotalMinutes] = useState(25);
+  const [totalMinutes,  setTotalMinutes] = useState(initialDuration);
   const [isRunning,     setIsRunning]    = useState(false);
-  const [sessionCount,  setSessionCount] = useState(0);
-  const [ambientSound,  setAmbientSound] = useState('none');
-  const [volume,        setVolume]       = useState(0.5);
-  const [language,      setLanguage]     = useState('ru');
-  const [todayMinutes,  setTodayMinutes] = useState(0);
-  const [streak,        setStreak]       = useState(0);
+  const [sessionCount,  setSessionCount] = useState(Number(savedStats.sessionCount) || 0);
+  const [meditationSessions, setMeditationSessions] = useState(Number(savedStats.meditationSessions) || 0);
+  const [meditationMinutes, setMeditationMinutes] = useState(Number(savedStats.meditationMinutes) || 0);
+  const [ambientSound,  setAmbientSound] = useState(savedPreferences.ambientSound || 'none');
+  const [volume,        setVolume]       = useState(Number.isFinite(savedPreferences.volume) ? savedPreferences.volume : 0.5);
+  const [language,      setLanguage]     = useState(savedPreferences.language === 'en' ? 'en' : 'ru');
+  const [todayMinutes,  setTodayMinutes] = useState(Number(savedStats.todayMinutes) || 0);
+  const [streak,        setStreak]       = useState(Number(savedStats.streak) || 0);
   const [completedTasks,setCompletedTasks]= useState(0);
+  const [seasonPreference, setSeasonPreference] = useState(
+    ['auto', 'summer', 'autumn', 'winter', 'spring'].includes(savedPreferences.seasonPreference)
+      ? savedPreferences.seasonPreference
+      : 'auto'
+  );
+  const [notificationsEnabled, setNotificationsEnabled] = useState(Boolean(savedPreferences.notificationsEnabled));
+  const [clearSignal, setClearSignal] = useState(0);
   const [toast,         setToast]        = useState({ visible: false, message: '' });
   const audioRef = useRef(null);
+  const proceduralAudioRef = useRef(null);
+  const deadlineRef = useRef(null);
+
+  const activeSeason = seasonPreference === 'auto' ? getAutomaticSeason() : seasonPreference;
+  const seasonTheme = SEASON_THEMES[activeSeason];
 
   /* ── Translations ── */
   const translations = {
@@ -439,32 +508,58 @@ function App() {
       tagline:'Экспертиза × ИИ × Результат',
       onPause:'На паузе', inWork:'В работе',
       start:'Старт', pause:'Пауза', reset:'Сброс',
+      focus:'Фокус', meditation:'Медитация',
+      focusHint:'Рабочая сессия', meditationHint:'Спокойное дыхание и восстановление',
       minutes:'мин', setTime:'Установить время',
       backgroundSounds:'Фоновые звуки',
       silence:'Тишина', forest:'Лес', forest2:'Лес 2', ocean:'Океан', construction:'Стройка',
+      brown:'Brown noise', rain:'Мягкий дождь', zen:'Тихий drone',
       safetyTip:'Совет по безопасности', newTip:'Новый совет',
       dailyStats:'Статистика дня', series:'Серия', sessions:'Сессий',
-      minutesCount:'Минут', tasks:'Задач',
-      dailyTasks:'Задачи на день', addTask:'Добавить задачу...',
+      minutesCount:'Минут', meditationCount:'Медитаций', tasks:'Задач',
+      dailyTasks:'Задачи на день', addTask:'Добавить задачу...', addTaskAction:'Добавить задачу',
+      markTask:'Отметить задачу', deleteTask:'Удалить задачу',
       completed:'Завершено', madeAt:'Создано с',
       sessionDone:'🎉 Сессия завершена! Время для перерыва',
-      calendar:'Календарь',
+      meditationDone:'Медитация завершена. Возвращайтесь к делам без спешки',
+      atmosphere:'Атмосфера',
+      season:'Сезон', auto:'Авто', summer:'Лето', autumn:'Осень', winter:'Зима', spring:'Весна',
+      settings:'Настройки и данные',
+      notifications:'Уведомления', notificationsOn:'Включены', notificationsOff:'Выключены',
+      notificationsDenied:'Браузер заблокировал уведомления. Разрешите их в настройках сайта.',
+      clearData:'Очистить данные',
+      clearConfirm:'Удалить сохранённые задачи, статистику и настройки Safety Pomodoro?',
+      dataCleared:'Сохранённые данные очищены',
+      volume:'Громкость',
     },
     en: {
       title:'Safety Pomodoro', subtitle:'PRODUCTIVE SAFETY',
       tagline:'Expertise × AI × Results',
       onPause:'On pause', inWork:'In work',
       start:'Start', pause:'Pause', reset:'Reset',
+      focus:'Focus', meditation:'Meditation',
+      focusHint:'Work session', meditationHint:'Calm breathing and recovery',
       minutes:'min', setTime:'Set time',
       backgroundSounds:'Background sounds',
       silence:'Silence', forest:'Forest', forest2:'Forest 2', ocean:'Ocean', construction:'Construction',
+      brown:'Brown noise', rain:'Gentle rain', zen:'Quiet drone',
       safetyTip:'Safety tip', newTip:'New tip',
       dailyStats:'Daily statistics', series:'Series', sessions:'Sessions',
-      minutesCount:'Minutes', tasks:'Tasks',
-      dailyTasks:'Daily tasks', addTask:'Add task...',
+      minutesCount:'Minutes', meditationCount:'Meditations', tasks:'Tasks',
+      dailyTasks:'Daily tasks', addTask:'Add task...', addTaskAction:'Add task',
+      markTask:'Mark task', deleteTask:'Delete task',
       completed:'Completed', madeAt:'Made with',
       sessionDone:'🎉 Session complete! Time for a break',
-      calendar:'Calendar',
+      meditationDone:'Meditation complete. Return to your work without rushing',
+      atmosphere:'Atmosphere',
+      season:'Season', auto:'Auto', summer:'Summer', autumn:'Autumn', winter:'Winter', spring:'Spring',
+      settings:'Settings and data',
+      notifications:'Notifications', notificationsOn:'On', notificationsOff:'Off',
+      notificationsDenied:'The browser blocked notifications. Allow them in site settings.',
+      clearData:'Clear saved data',
+      clearConfirm:'Delete saved tasks, statistics and Safety Pomodoro settings?',
+      dataCleared:'Saved data cleared',
+      volume:'Volume',
     },
   };
 
@@ -540,32 +635,97 @@ function App() {
   const safetyTips = useMemo(() => safetyTipsData[language], [language]);
   const [currentTip, setCurrentTip] = useState(() => safetyTips[Math.floor(Math.random() * safetyTips.length)]);
 
+  /* ── Persistence ── */
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.preferences, JSON.stringify({
+      mode,
+      focusDuration,
+      meditationDuration,
+      ambientSound,
+      volume,
+      language,
+      seasonPreference,
+      notificationsEnabled,
+    }));
+  }, [
+    mode,
+    focusDuration,
+    meditationDuration,
+    ambientSound,
+    volume,
+    language,
+    seasonPreference,
+    notificationsEnabled,
+  ]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.stats, JSON.stringify({
+      date: dateKey(),
+      sessionCount,
+      todayMinutes,
+      meditationSessions,
+      meditationMinutes,
+      streak,
+    }));
+  }, [sessionCount, todayMinutes, meditationSessions, meditationMinutes, streak]);
+
   /* ── Timer logic ── */
+  const completeSession = useCallback(() => {
+    setIsRunning(false);
+    deadlineRef.current = null;
+    playChime();
+
+    if (mode === 'meditation') {
+      setMeditationSessions(value => value + 1);
+      setMeditationMinutes(value => value + totalMinutes);
+    } else {
+      setSessionCount(value => value + 1);
+      setTodayMinutes(value => value + totalMinutes);
+      setStreak(value => value + 1);
+    }
+
+    const activeTranslations = translations[language];
+    const message = mode === 'meditation' ? activeTranslations.meditationDone : activeTranslations.sessionDone;
+    showBrowserNotification(message);
+    setToast({ visible: true, message });
+    setMinutes(totalMinutes);
+    setSeconds(0);
+    setCurrentTip(safetyTips[Math.floor(Math.random() * safetyTips.length)]);
+  }, [mode, safetyTips, language, totalMinutes, notificationsEnabled]);
+
   useEffect(() => {
     if (!isRunning) return;
-    const interval = setInterval(() => {
-      setSeconds(prev => {
-        if (prev === 0) {
-          if (minutes === 0) {
-            setIsRunning(false);
-            playChime();
-            setSessionCount(s => s + 1);
-            setTodayMinutes(m => m + totalMinutes);
-            setStreak(s => s + 1);
-            showBrowserNotification(t.sessionDone);
-            setToast({ visible: true, message: t.sessionDone });
-            setMinutes(totalMinutes);
-            setCurrentTip(safetyTips[Math.floor(Math.random() * safetyTips.length)]);
-            return 0;
-          }
-          setMinutes(m => m - 1);
-          return 59;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+
+    if (!deadlineRef.current) {
+      deadlineRef.current = Date.now() + (minutes * 60 + seconds) * 1000;
+    }
+
+    const updateRemaining = () => {
+      const remaining = Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000));
+      if (remaining <= 0) {
+        completeSession();
+        return;
+      }
+      setMinutes(Math.floor(remaining / 60));
+      setSeconds(remaining % 60);
+    };
+
+    updateRemaining();
+    const interval = setInterval(updateRemaining, 250);
     return () => clearInterval(interval);
-  }, [isRunning, minutes, totalMinutes, safetyTips, t]);
+  }, [isRunning, completeSession]);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (isRunning && !document.hidden && deadlineRef.current) {
+        const remaining = Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000));
+        setMinutes(Math.floor(remaining / 60));
+        setSeconds(remaining % 60);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [isRunning]);
 
   /* ── Rotate tips every 30s ── */
   useEffect(() => {
@@ -580,29 +740,119 @@ function App() {
   }, [language, safetyTips]);
 
   /* ── Audio ── */
+  const stopProceduralSound = () => {
+    const current = proceduralAudioRef.current;
+    if (!current) return;
+    current.nodes.forEach(node => {
+      try { node.stop?.(); } catch {}
+      try { node.disconnect?.(); } catch {}
+    });
+    try { current.context.close(); } catch {}
+    proceduralAudioRef.current = null;
+  };
+
+  const startProceduralSound = type => {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    stopProceduralSound();
+    const context = new AudioContextClass();
+    const master = context.createGain();
+    master.gain.value = volume * 0.32;
+    master.connect(context.destination);
+    const nodes = [];
+
+    if (type === 'zen') {
+      [110, 164.81, 220].forEach((frequency, index) => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = index === 1 ? 'triangle' : 'sine';
+        oscillator.frequency.value = frequency;
+        gain.gain.value = [0.12, 0.05, 0.025][index];
+        oscillator.connect(gain).connect(master);
+        oscillator.start();
+        nodes.push(oscillator, gain);
+      });
+      const lfo = context.createOscillator();
+      const lfoGain = context.createGain();
+      lfo.frequency.value = 0.08;
+      lfoGain.gain.value = 0.035;
+      lfo.connect(lfoGain).connect(master.gain);
+      lfo.start();
+      nodes.push(lfo, lfoGain);
+    } else {
+      const frameCount = context.sampleRate * 4;
+      const buffer = context.createBuffer(1, frameCount, context.sampleRate);
+      const data = buffer.getChannelData(0);
+      let last = 0;
+      for (let i = 0; i < frameCount; i += 1) {
+        const white = Math.random() * 2 - 1;
+        if (type === 'brown') {
+          last = (last + 0.02 * white) / 1.02;
+          data[i] = last * 3.2;
+        } else {
+          data[i] = white * (0.55 + Math.random() * 0.35);
+        }
+      }
+      const source = context.createBufferSource();
+      const filter = context.createBiquadFilter();
+      source.buffer = buffer;
+      source.loop = true;
+      filter.type = type === 'brown' ? 'lowpass' : 'bandpass';
+      filter.frequency.value = type === 'brown' ? 700 : 1800;
+      filter.Q.value = type === 'brown' ? 0.5 : 0.7;
+      source.connect(filter).connect(master);
+      source.start();
+      nodes.push(source, filter);
+    }
+
+    proceduralAudioRef.current = { context, master, nodes };
+    context.resume().catch(() => {});
+  };
+
   useEffect(() => {
-    if (!audioRef.current) return;
-    if (ambientSound !== 'none') {
+    if (!audioRef.current) return undefined;
+    audioRef.current.pause();
+    stopProceduralSound();
+
+    if (PROCEDURAL_SOUNDS.has(ambientSound)) {
+      startProceduralSound(ambientSound);
+    } else if (ambientSound !== 'none') {
       audioRef.current.load();
       audioRef.current.volume = volume;
       audioRef.current.play().catch(() => {});
-    } else {
-      audioRef.current.pause();
     }
+
+    return () => stopProceduralSound();
   }, [ambientSound]);
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume;
+    const procedural = proceduralAudioRef.current;
+    if (procedural) {
+      procedural.master.gain.setTargetAtTime(volume * 0.32, procedural.context.currentTime, 0.08);
+    }
   }, [volume]);
 
   /* ── Notifications ── */
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
-  }, []);
-
   const showBrowserNotification = msg => {
-    if ('Notification' in window && Notification.permission === 'granted') {
+    if (notificationsEnabled && 'Notification' in window && Notification.permission === 'granted') {
       new Notification(msg, { icon: 'images/BP.png' });
+    }
+  };
+
+  const toggleNotifications = async () => {
+    if (notificationsEnabled) {
+      setNotificationsEnabled(false);
+      return;
+    }
+    if (!('Notification' in window)) return;
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      setNotificationsEnabled(true);
+    } else {
+      setNotificationsEnabled(false);
+      setToast({ visible: true, message: t.notificationsDenied });
     }
   };
 
@@ -611,21 +861,84 @@ function App() {
   };
 
   /* ── Handlers ── */
-  const handleStart = () => setIsRunning(r => !r);
-  const handleReset = () => { setIsRunning(false); setMinutes(totalMinutes); setSeconds(0); };
-  const handlePreset = m => { setTotalMinutes(m); setMinutes(m); setSeconds(0); setIsRunning(false); };
-  const handleDial   = m => { if (!isRunning) { setTotalMinutes(m); setMinutes(m); setSeconds(0); } };
+  const handleStart = () => {
+    if (isRunning) {
+      setIsRunning(false);
+      deadlineRef.current = null;
+      return;
+    }
+    deadlineRef.current = Date.now() + (minutes * 60 + seconds) * 1000;
+    setIsRunning(true);
+  };
+
+  const handleReset = () => {
+    setIsRunning(false);
+    deadlineRef.current = null;
+    setMinutes(totalMinutes);
+    setSeconds(0);
+  };
+
+  const updateModeDuration = value => {
+    if (mode === 'meditation') setMeditationDuration(value);
+    else setFocusDuration(value);
+  };
+
+  const handlePreset = value => {
+    updateModeDuration(value);
+    setTotalMinutes(value);
+    setMinutes(value);
+    setSeconds(0);
+    deadlineRef.current = null;
+    setIsRunning(false);
+  };
+
+  const handleDial = value => {
+    if (!isRunning) handlePreset(value);
+  };
+
+  const handleModeChange = nextMode => {
+    if (nextMode === mode) return;
+    const nextDuration = nextMode === 'meditation' ? meditationDuration : focusDuration;
+    setMode(nextMode);
+    setTotalMinutes(nextDuration);
+    setMinutes(nextDuration);
+    setSeconds(0);
+    deadlineRef.current = null;
+    setIsRunning(false);
+  };
+
+  const clearSavedData = () => {
+    if (!window.confirm(t.clearConfirm)) return;
+    Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+    stopProceduralSound();
+    audioRef.current?.pause();
+    setMode('focus');
+    setFocusDuration(25);
+    setMeditationDuration(10);
+    setTotalMinutes(25);
+    setMinutes(25);
+    setSeconds(0);
+    setIsRunning(false);
+    setSessionCount(0);
+    setMeditationSessions(0);
+    setMeditationMinutes(0);
+    setTodayMinutes(0);
+    setStreak(0);
+    setCompletedTasks(0);
+    setAmbientSound('none');
+    setVolume(0.5);
+    setLanguage('ru');
+    setSeasonPreference('auto');
+    setNotificationsEnabled(false);
+    setClearSignal(value => value + 1);
+    setToast({ visible: true, message: t.dataCleared });
+  };
 
   /* ── Progress ── */
   const totalSec     = totalMinutes * 60;
   const remainingSec = minutes * 60 + seconds;
   const progress     = ((totalSec - remainingSec) / totalSec) * 100;
   const circumference = 2 * Math.PI * 130;
-
-  const getBgImage = () => {
-    const map = { forest:'images/forest_1.webp', forest2:'images/forest_2.webp', ocean:'images/ocean.webp', construction:'images/construction.webp' };
-    return map[ambientSound] || null;
-  };
 
   const audioSrc = { forest:'Forest.mp3', forest2:'Forest_2.mp3', ocean:'Ocean.mp3', construction:'construction_site.mp3' }[ambientSound] || '';
 
@@ -635,18 +948,24 @@ function App() {
     { key:'forest2',      label: t.forest2,       icon:'fa-leaf',         activeColor: '#15803d' },
     { key:'ocean',        label: t.ocean,         icon:'fa-water',        activeColor: '#2563eb' },
     { key:'construction', label: t.construction,  icon:'fa-hammer',       activeColor: BRAND.goldHover },
+    { key:'brown',        label: t.brown,         icon:'fa-wave-square',  activeColor: '#7c6f64' },
+    { key:'rain',         label: t.rain,          icon:'fa-cloud-rain',   activeColor: '#3b82a0' },
+    { key:'zen',          label: t.zen,           icon:'fa-spa',          activeColor: '#8b78b8' },
   ];
+
+  const presets = mode === 'meditation' ? [5, 10, 15, 20] : [20, 25, 30, 40];
+  const seasonOptions = ['auto', 'summer', 'autumn', 'winter', 'spring'];
 
   /* ──────────── RENDER ──────────── */
   return (
     <div
       className="min-h-screen p-2 md:p-4 lg:p-8 relative"
       style={{
-        backgroundImage: getBgImage()
-          ? `linear-gradient(rgba(11,29,58,0.88), rgba(11,29,58,0.88)), url(${getBgImage()})`
-          : `linear-gradient(135deg, ${BRAND.dark} 0%, ${BRAND.steel} 55%, ${BRAND.dark} 100%)`,
+        '--season-accent': seasonTheme.accent,
+        '--season-soft': seasonTheme.soft,
+        backgroundImage: `linear-gradient(180deg, ${seasonTheme.overlay} 0%, ${seasonTheme.overlayDeep} 72%, ${BRAND.dark} 100%), url(${seasonTheme.image})`,
         backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        backgroundPosition: 'center top',
         backgroundAttachment: 'fixed',
       }}
     >
@@ -660,7 +979,7 @@ function App() {
         <header className="text-center mb-4 md:mb-8 slide-in">
           <div
             className="inline-flex items-center gap-3 rounded-2xl px-5 md:px-7 py-3 md:py-4"
-            style={{ ...glassStyle, border: `1px solid rgba(212,175,55,0.22)` }}
+            style={{ ...glassStyle, border: `1px solid ${seasonTheme.accent}55` }}
           >
             <a href="https://bestpracticeai.ru/" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity flex-shrink-0">
               <img src="images/BP.png" alt="Best Practice" className="w-10 h-10 md:w-14 md:h-14 object-contain rounded-full" />
@@ -693,13 +1012,15 @@ function App() {
           <div className="flex gap-1 rounded-full p-1" style={{ ...glassStyle }}>
             {['ru', 'en'].map(lang => (
               <button
+                type="button"
                 key={lang}
                 onClick={() => setLanguage(lang)}
+                aria-pressed={language === lang}
                 className="flex items-center gap-2 px-3 py-2 rounded-full transition-all text-sm font-medium"
                 style={{
                   fontFamily: 'Montserrat, sans-serif',
-                  background: language === lang ? `rgba(212,175,55,0.2)` : 'transparent',
-                  border: language === lang ? `1px solid rgba(212,175,55,0.4)` : '1px solid transparent',
+                  background: language === lang ? `${seasonTheme.accent}33` : 'transparent',
+                  border: language === lang ? `1px solid ${seasonTheme.accent}66` : '1px solid transparent',
                   color: language === lang ? 'white' : 'rgba(255,255,255,0.55)',
                 }}
               >
@@ -707,6 +1028,42 @@ function App() {
                 <span>{lang === 'ru' ? 'Rus' : 'Eng'}</span>
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* ── MODE + SEASON ── */}
+        <div className="mb-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="flex rounded-2xl p-1" style={glassStyle} aria-label={t.focus}>
+            {[
+              { key: 'focus', icon: 'fa-bullseye', label: t.focus },
+              { key: 'meditation', icon: 'fa-spa', label: t.meditation },
+            ].map(option => (
+              <button
+                type="button"
+                key={option.key}
+                onClick={() => handleModeChange(option.key)}
+                aria-pressed={mode === option.key}
+                className="rounded-xl px-4 py-2.5 text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                style={{
+                  fontFamily: 'Montserrat, sans-serif',
+                  color: mode === option.key ? BRAND.dark : 'rgba(255,255,255,0.70)',
+                  background: mode === option.key
+                    ? `linear-gradient(135deg, ${seasonTheme.soft}, ${seasonTheme.accent})`
+                    : 'transparent',
+                }}
+              >
+                <i className={`fas ${option.icon} mr-2`} aria-hidden="true"></i>
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div
+            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-white/80"
+            style={{ ...glassStyle, border: `1px solid ${seasonTheme.accent}45`, fontFamily: 'Montserrat, sans-serif' }}
+          >
+            <span aria-hidden="true">{seasonTheme.icon}</span>
+            <span>{t[activeSeason]}</span>
+            {seasonPreference === 'auto' && <span className="text-white/45">· {t.auto}</span>}
           </div>
         </div>
 
@@ -719,23 +1076,27 @@ function App() {
             {/* TIMER CARD */}
             <FadeIn delay={100} duration={800}>
               <div
-                className="rounded-3xl p-6 md:p-8 shadow-2xl slide-in"
+                className="rounded-3xl p-4 md:p-8 shadow-2xl slide-in"
                 style={{
                   ...glassStyle,
-                  ...(isRunning ? { boxShadow: `0 8px 60px rgba(212,175,55,0.18), 0 2px 12px rgba(0,0,0,0.4)` } : {}),
+                  border: `1px solid ${seasonTheme.accent}33`,
+                  ...(isRunning ? { boxShadow: `0 8px 60px ${seasonTheme.accent}2d, 0 2px 12px rgba(0,0,0,0.4)` } : {}),
                 }}
               >
-                <div className="hazard-stripe h-3 rounded-full mb-6 opacity-80"></div>
+                <div className="hazard-stripe h-2.5 rounded-full mb-4 md:mb-6 opacity-80"></div>
 
                 {/* TIMER DISPLAY */}
-                <div className="text-center mb-6">
+                <div className="text-center mb-4 md:mb-6">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-[0.22em] text-white/60">
+                    {mode === 'meditation' ? t.meditationHint : t.focusHint}
+                  </p>
                   <div className={`relative inline-block ${isRunning ? 'timer-running' : ''}`}>
                     <PulseRings isRunning={isRunning} />
-                    <svg className="progress-ring" width="280" height="280">
+                    <svg className="progress-ring h-auto w-[230px] md:w-[280px]" viewBox="0 0 280 280" role="img" aria-label={`${minutes}:${String(seconds).padStart(2, '0')}`}>
                       <defs>
                         <linearGradient id="prog-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor={BRAND.softGold} />
-                          <stop offset="100%" stopColor={BRAND.goldHover} />
+                          <stop offset="0%" stopColor={seasonTheme.soft} />
+                          <stop offset="100%" stopColor={seasonTheme.accent} />
                         </linearGradient>
                         <filter id="gold-glow">
                           <feGaussianBlur stdDeviation="3" result="blur" />
@@ -760,10 +1121,11 @@ function App() {
 
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                       <div
-                        className="text-6xl md:text-7xl font-bold text-white tabular-nums"
+                        className="text-5xl md:text-7xl font-bold text-white tabular-nums"
+                        role="timer"
                         style={{
                           fontFamily: 'Montserrat, sans-serif',
-                          textShadow: isRunning ? `0 0 40px rgba(212,175,55,0.35)` : 'none',
+                          textShadow: isRunning ? `0 0 40px ${seasonTheme.accent}55` : 'none',
                         }}
                       >
                         {String(minutes).padStart(2,'0')}:{String(seconds).padStart(2,'0')}
@@ -772,9 +1134,9 @@ function App() {
                         className="mt-2 text-xs font-bold tracking-[0.25em] uppercase px-4 py-1 rounded-full"
                         style={{
                           fontFamily: 'Montserrat, sans-serif',
-                          background: isRunning ? `rgba(212,175,55,0.12)` : 'rgba(255,255,255,0.06)',
-                          border: isRunning ? `1px solid rgba(212,175,55,0.30)` : '1px solid rgba(255,255,255,0.12)',
-                          color: isRunning ? BRAND.gold : 'rgba(255,255,255,0.45)',
+                          background: isRunning ? `${seasonTheme.accent}20` : 'rgba(255,255,255,0.06)',
+                          border: isRunning ? `1px solid ${seasonTheme.accent}55` : '1px solid rgba(255,255,255,0.12)',
+                          color: isRunning ? seasonTheme.soft : 'rgba(255,255,255,0.60)',
                         }}
                       >
                         {isRunning ? t.inWork : t.onPause}
@@ -783,7 +1145,7 @@ function App() {
                   </div>
 
                   {/* Session dots */}
-                  <SessionDots sessionCount={sessionCount} language={language} />
+                  {mode === 'focus' && <SessionDots sessionCount={sessionCount} language={language} />}
                 </div>
 
                 <GoldDivider />
@@ -791,22 +1153,22 @@ function App() {
                 {/* CONTROLS */}
                 <div className="flex justify-center gap-4 mb-6 mt-4">
                   <GradientBorderButton onClick={handleStart} isActive={isRunning} className="transform hover:scale-105 active:scale-95">
-                    <i className={`fas ${isRunning ? 'fa-pause' : 'fa-play'} mr-2`}></i>
+                    <i className={`fas ${isRunning ? 'fa-pause' : 'fa-play'} mr-2`} aria-hidden="true"></i>
                     {isRunning ? t.pause : t.start}
                   </GradientBorderButton>
                   <RippleButton
                     onClick={handleReset}
-                    className="px-8 py-4 rounded-2xl font-bold text-lg neo-button transition-all transform hover:scale-105 active:scale-95"
+                    className="px-5 md:px-8 py-4 rounded-2xl font-bold text-lg neo-button transition-all transform hover:scale-105 active:scale-95"
                     style={{ fontFamily: 'Montserrat, sans-serif' }}
                   >
-                    <i className="fas fa-redo mr-2"></i>
+                    <i className="fas fa-redo mr-2" aria-hidden="true"></i>
                     {t.reset}
                   </RippleButton>
                 </div>
 
                 {/* PRESETS */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-                  {[20, 25, 30, 40].map(preset => (
+                  {presets.map(preset => (
                     <RippleButton
                       key={preset}
                       onClick={() => handlePreset(preset)}
@@ -814,11 +1176,11 @@ function App() {
                       style={{
                         fontFamily: 'Montserrat, sans-serif',
                         background: totalMinutes === preset
-                          ? `linear-gradient(135deg, ${BRAND.gold}, ${BRAND.goldHover})`
+                          ? `linear-gradient(135deg, ${seasonTheme.soft}, ${seasonTheme.accent})`
                           : 'rgba(255,255,255,0.07)',
                         color:  totalMinutes === preset ? BRAND.dark : 'rgba(255,255,255,0.75)',
                         border: totalMinutes === preset ? 'none' : '1px solid rgba(255,255,255,0.13)',
-                        boxShadow: totalMinutes === preset ? `0 4px 16px rgba(212,175,55,0.35)` : 'none',
+                        boxShadow: totalMinutes === preset ? `0 4px 16px ${seasonTheme.accent}55` : 'none',
                       }}
                     >
                       <i className="fas fa-clock mr-1.5"></i>
@@ -837,8 +1199,9 @@ function App() {
                   <input
                     type="range" min="1" max="60" value={totalMinutes}
                     onChange={e => handleDial(parseInt(e.target.value))}
+                    aria-label={`${t.setTime}: ${totalMinutes} ${t.minutes}`}
                     className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ background: `linear-gradient(to right, ${BRAND.gold} 0%, ${BRAND.gold} ${(totalMinutes/60)*100}%, rgba(255,255,255,0.13) ${(totalMinutes/60)*100}%, rgba(255,255,255,0.13) 100%)` }}
+                    style={{ background: `linear-gradient(to right, ${seasonTheme.accent} 0%, ${seasonTheme.accent} ${(totalMinutes/60)*100}%, rgba(255,255,255,0.13) ${(totalMinutes/60)*100}%, rgba(255,255,255,0.13) 100%)` }}
                   />
                   <div className="flex justify-between text-xs mt-1" style={{ color: 'rgba(255,255,255,0.30)', fontFamily: 'Montserrat, sans-serif' }}>
                     {['1','15','30','45','60'].map(n => <span key={n}>{n}</span>)}
@@ -847,20 +1210,36 @@ function App() {
               </div>
             </FadeIn>
 
+            {/* TASKS — kept close to the timer on every screen */}
+            <FadeIn delay={220} duration={700}>
+              <div className="rounded-2xl p-5 shadow-xl slide-in" style={glassStyle}>
+                <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <span style={{ color: '#a5b4fc' }}><i className="fas fa-sticky-note" aria-hidden="true"></i></span>
+                  {t.dailyTasks}
+                </h2>
+                <QuickNotes
+                  onTaskToggle={setCompletedTasks}
+                  translations={t}
+                  clearSignal={clearSignal}
+                />
+              </div>
+            </FadeIn>
+
             {/* SOUND CARD */}
             <FadeIn delay={300} duration={800}>
               <div className="glass rounded-2xl p-6 shadow-xl slide-in" style={glassStyle}>
-                <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                   <span style={{ color: BRAND.gold }}><i className="fas fa-music"></i></span>
                   {t.backgroundSounds}
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
                   {soundButtons.map(({ key, label, icon, activeColor }) => {
                     const isActive = ambientSound === key;
                     return (
                       <RippleButton
                         key={key}
                         onClick={() => setAmbientSound(key)}
+                        aria-pressed={isActive}
                         className="py-3 px-2 rounded-xl text-sm font-medium transition-all enhanced-button active:scale-95"
                         style={{
                           fontFamily: 'Montserrat, sans-serif',
@@ -870,7 +1249,7 @@ function App() {
                           boxShadow: isActive ? `0 4px 14px ${activeColor}55` : 'none',
                         }}
                       >
-                        <i className={`fas ${icon} mr-1.5`}></i>{label}
+                        <i className={`fas ${icon} mr-1.5`} aria-hidden="true"></i>{label}
                       </RippleButton>
                     );
                   })}
@@ -880,6 +1259,7 @@ function App() {
                   <input
                     type="range" min="0" max="1" step="0.1" value={volume}
                     onChange={e => setVolume(parseFloat(e.target.value))}
+                    aria-label={`${t.volume}: ${Math.round(volume * 100)}%`}
                     className="flex-1 h-2 rounded-lg appearance-none cursor-pointer"
                     style={{ background: `linear-gradient(to right, ${BRAND.gold} 0%, ${BRAND.gold} ${volume*100}%, rgba(255,255,255,0.13) ${volume*100}%, rgba(255,255,255,0.13) 100%)` }}
                   />
@@ -902,9 +1282,9 @@ function App() {
                   >
                     <i className="fas fa-exclamation-triangle text-sm" style={{ color: BRAND.dark }}></i>
                   </div>
-                  <h3 className="text-sm font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <h2 className="text-sm font-bold text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {t.safetyTip}
-                  </h3>
+                  </h2>
                 </div>
                 <div
                   className="rounded-xl p-4 mb-4"
@@ -932,38 +1312,79 @@ function App() {
             {/* STATS */}
             <FadeIn delay={700} duration={800}>
               <div className="rounded-2xl p-5 shadow-xl slide-in" style={glassStyle}>
-                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                   <span style={{ color: BRAND.gold }}><i className="fas fa-chart-line"></i></span>
                   {t.dailyStats}
-                </h3>
+                </h2>
                 <div className="space-y-2.5">
                   <StatCard icon="fa-fire"         iconColor={BRAND.gold}    label={t.series}       value={streak}        bg="rgba(212,175,55,0.07)" border="rgba(212,175,55,0.18)" />
                   <StatCard icon="fa-check-circle" iconColor="#4ade80"       label={t.sessions}     value={sessionCount}  bg="rgba(74,222,128,0.06)" border="rgba(74,222,128,0.16)" />
                   <StatCard icon="fa-clock"        iconColor="#60a5fa"       label={t.minutesCount} value={todayMinutes}  bg="rgba(96,165,250,0.06)" border="rgba(96,165,250,0.16)" />
+                  <StatCard icon="fa-spa"          iconColor="#c4b5fd"       label={t.meditationCount} value={meditationSessions} bg="rgba(196,181,253,0.06)" border="rgba(196,181,253,0.16)" />
                   <StatCard icon="fa-check-double" iconColor="#c084fc"       label={t.tasks}        value={completedTasks}bg="rgba(192,132,252,0.06)"border="rgba(192,132,252,0.16)" />
                 </div>
               </div>
             </FadeIn>
 
-            {/* TASKS */}
+            {/* SETTINGS + DATA */}
             <FadeIn delay={900} duration={800}>
               <div className="rounded-2xl p-5 shadow-xl slide-in" style={glassStyle}>
-                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  <span style={{ color: '#818cf8' }}><i className="fas fa-sticky-note"></i></span>
-                  {t.dailyTasks}
-                </h3>
-                <QuickNotes onTaskToggle={setCompletedTasks} translations={t} />
-              </div>
-            </FadeIn>
+                <h2 className="text-sm font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <span style={{ color: seasonTheme.accent }}><i className="fas fa-sliders-h" aria-hidden="true"></i></span>
+                  {t.settings}
+                </h2>
 
-            {/* CALENDAR */}
-            <FadeIn delay={1100} duration={800}>
-              <div className="rounded-2xl p-5 shadow-xl slide-in" style={glassStyle}>
-                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  <span style={{ color: '#f472b6' }}><i className="fas fa-calendar-alt"></i></span>
-                  {t.calendar}
-                </h3>
-                <MiniCalendar language={language} />
+                <fieldset className="mb-4">
+                  <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/65">{t.season}</legend>
+                  <div className="grid grid-cols-2 gap-2">
+                    {seasonOptions.map(season => {
+                      const selected = seasonPreference === season;
+                      const previewSeason = season === 'auto' ? getAutomaticSeason() : season;
+                      return (
+                        <button
+                          type="button"
+                          key={season}
+                          onClick={() => setSeasonPreference(season)}
+                          aria-pressed={selected}
+                          className="rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                          style={{
+                            color: selected ? BRAND.dark : 'rgba(255,255,255,0.75)',
+                            background: selected
+                              ? `linear-gradient(135deg, ${SEASON_THEMES[previewSeason].soft}, ${SEASON_THEMES[previewSeason].accent})`
+                              : 'rgba(255,255,255,0.06)',
+                            border: selected ? '1px solid transparent' : '1px solid rgba(255,255,255,0.10)',
+                          }}
+                        >
+                          <span className="mr-2" aria-hidden="true">
+                            {season === 'auto' ? '◉' : SEASON_THEMES[season].icon}
+                          </span>
+                          {t[season]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+
+                <button
+                  type="button"
+                  onClick={toggleNotifications}
+                  className="mb-3 flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
+                >
+                  <span><i className="fas fa-bell mr-2 text-sky-300" aria-hidden="true"></i>{t.notifications}</span>
+                  <span style={{ color: notificationsEnabled ? '#86efac' : 'rgba(255,255,255,0.50)' }}>
+                    {notificationsEnabled ? t.notificationsOn : t.notificationsOff}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={clearSavedData}
+                  className="flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-bold text-red-100 transition-colors hover:bg-red-400/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200/70"
+                  style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.24)' }}
+                >
+                  <i className="fas fa-trash-alt mr-2" aria-hidden="true"></i>{t.clearData}
+                </button>
               </div>
             </FadeIn>
 
