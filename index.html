@@ -22,8 +22,9 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-  <!-- Babel Standalone для JSX -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Babel 7 keeps the classic JSX runtime used by the React UMD build below.
+       Do not use an unpinned @babel/standalone URL: Babel 8 emits ESM imports. -->
+  <script src="https://unpkg.com/@babel/standalone@7.28.5/babel.min.js"></script>
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -66,7 +67,7 @@
     }
 
     @keyframes ripple-effect {
-      0%   { transform: scale(1);  opacity: 1; }
+      0%   { transform: scale(1); opacity: 1; }
       50%  { transform: scale(10); opacity: 0.3; }
       100% { transform: scale(35); opacity: 0; }
     }
@@ -79,7 +80,7 @@
 
     @keyframes shimmer {
       0%   { background-position: -200% center; }
-      100% { background-position:  200% center; }
+      100% { background-position: 200% center; }
     }
 
     @keyframes float-up {
